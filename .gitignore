@@ -1,0 +1,9 @@
+node_modules
+.nvmrc
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+
+#production
+build

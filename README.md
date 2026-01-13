@@ -153,7 +153,16 @@ The project is implemented step by step, focusing on core functionality first.
 ### Step 5 – Integration and UI
 - Extend the frontend with basic UI for viewing and editing scenarios  
 - Connect frontend to the authenticated API  
-- Complete end-to-end CRUD flow  
+- Complete end-to-end CRUD flow
+
+---
+
+### Step 6 – Testing (optional)
+
+- Add basic unit tests for Lambda handlers using Vitest
+- Validate request and response contracts
+
+---
 
 ## Current status
 

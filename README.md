@@ -82,9 +82,6 @@ The API operates on the `Scenario` resource using standard HTTP methods:
 - DELETE /scenarios/{id}  
   Deletes a scenario by its identifier  
 
-Filtering by component is supported via query parameters, for example:
-- GET /scenarios?component=GQT  
-- GET /scenarios?component=GQT,TGPP  
 
 ---
 

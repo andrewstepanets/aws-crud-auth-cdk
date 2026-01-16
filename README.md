@@ -169,5 +169,13 @@ The project is implemented step by step, focusing on core functionality first.
 - [x] Initial React application scaffolded and verified locally  
 - [x] AWS account configured  
 - [x] Non-root IAM user created for development  
-- [x] AWS budget configured  
+- [x] AWS budget configured
+
+### Step 2 – Backend API
+
+- [x] Created RestApiStack to provision the backend infrastructure
+- [x] Configured API Gateway with CRUD endpoints for /scenarios and /scenarios/{id}
+- [x] Implemented a single Lambda handler to process GET, POST, PUT, DELETE
+- [x] Used NodejsFunction with esbuild bundling for deployment
+- [x] Deployed the stack and verified the endpoint via Insomnia
 

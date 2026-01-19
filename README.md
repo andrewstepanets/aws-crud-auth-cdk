@@ -179,3 +179,10 @@ The project is implemented step by step, focusing on core functionality first.
 - [x] Used NodejsFunction with esbuild bundling for deployment
 - [x] Deployed the stack and verified the endpoint via Insomnia
 
+### Step 3 – Persistence
+
+- [x] Created a DynamoDB table for Scenario storage
+- [x] Added permissions for the Lambda function to read and write data in DynamoDB
+- [x] Updated utility functions to use DynamoDB instead of returning mock data
+- [x] Verified data persistence and retrieval via API requests
+

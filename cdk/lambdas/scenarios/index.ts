@@ -9,9 +9,9 @@ export const handler = async (event: APIGatewayEvent) => {
         case 'GET':
             return id ? getById(id) : getAll();
         case 'POST':
-            return create();
+            return create(event);
         case 'PUT':
-            return update(id);
+            return update(id, event);
         case 'DELETE':
             return remove(id);
         default:

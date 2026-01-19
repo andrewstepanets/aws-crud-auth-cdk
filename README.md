@@ -48,7 +48,8 @@ All cloud resources are defined and deployed using AWS CDK.
 A Scenario represents a documented flow describing business behaviour, edge cases, or testing steps.
 
 A Scenario contains:
-- id  
+- id
+- ticket
 - title  
 - description  
 - steps  

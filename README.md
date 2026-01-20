@@ -4,13 +4,13 @@ This repository contains a **training project** as part of an internal learning 
 
 The objective is to design and implement a small web application that meets the following requirements:
 
-- Web application supporting CRUD operations  
-- Persistent data storage  
-- User authentication restricting access to a selected group of users  
-- RESTful API for all CRUD operations  
-- All components hosted in AWS  
-- Use Infrastructure as Code with AWS CDK to define and deploy cloud resources 
-- No use of Amplify or AppSync  
+- Web application supporting CRUD operations
+- Persistent data storage
+- User authentication restricting access to a selected group of users
+- RESTful API for all CRUD operations
+- All components hosted in AWS
+- Use Infrastructure as Code with AWS CDK to define and deploy cloud resources
+- No use of Amplify or AppSync
 
 Based on these requirements, the project models a **Scenarios** service.
 
@@ -21,19 +21,20 @@ The Scenarios service is a small internal tool for storing and managing **scenar
 Each scenario captures a clear sequence of steps showing how functionality behaves and how it should be tested across services.
 
 Scenarios are used by:
-- developers, to understand system behaviour and business logic  
+
+- developers, to understand system behaviour and business logic
 - QA engineers, to follow consistent steps when testing features and edge cases
 
 ## Architecture
 
 The application follows a simple, production-like architecture:
 
-- Frontend: React  
-- Hosting: S3 + CloudFront  
-- API: API Gateway + AWS Lambda  
-- Authentication: Amazon Cognito  
-- Storage: DynamoDB  
-- Infrastructure as Code: AWS CDK  
+- Frontend: React
+- Hosting: S3 + CloudFront
+- API: API Gateway + AWS Lambda
+- Authentication: Amazon Cognito
+- Storage: DynamoDB
+- Infrastructure as Code: AWS CDK
 
 All cloud resources are defined and deployed using AWS CDK.
 
@@ -48,15 +49,16 @@ All cloud resources are defined and deployed using AWS CDK.
 A Scenario represents a documented flow describing business behaviour, edge cases, or testing steps.
 
 A Scenario contains:
+
 - id
 - ticket
-- title  
-- description  
-- steps  
-- expectedResult  
-- components (e.g. ESA, GQT)  
-- createdBy  
-- createdAt  
+- title
+- description
+- steps
+- expectedResult
+- components (e.g. ESA, GQT)
+- createdBy
+- createdAt
 
 Components are treated as metadata and allow a scenario to be associated with multiple systems.
 
@@ -69,20 +71,19 @@ The application exposes **a single REST API** via API Gateway.
 The API operates on the `Scenario` resource using standard HTTP methods:
 
 - GET /scenarios  
-  Returns a list of all scenarios  
+  Returns a list of all scenarios
 
 - GET /scenarios/{id}  
-  Returns a single scenario by its identifier  
+  Returns a single scenario by its identifier
 
 - POST /scenarios  
-  Creates a new scenario  
+  Creates a new scenario
 
 - PUT /scenarios/{id}  
-  Updates an existing scenario  
+  Updates an existing scenario
 
 - DELETE /scenarios/{id}  
-  Deletes a scenario by its identifier  
-
+  Deletes a scenario by its identifier
 
 ---
 
@@ -93,8 +94,9 @@ Access to the application is restricted to authenticated users.
 Authentication is handled using Amazon Cognito.
 
 Authorization rules:
-- Developers can create, update, delete, and view scenarios  
-- QA and product roles have view-only access  
+
+- Developers can create, update, delete, and view scenarios
+- QA and product roles have view-only access
 
 User identity is validated before requests reach the backend.
 
@@ -103,54 +105,59 @@ User identity is validated before requests reach the backend.
 ## Infrastructure overview
 
 AWS resources include:
-- S3 bucket for frontend hosting  
-- CloudFront distribution for content delivery  
-- API Gateway for REST API  
-- Lambda functions for backend logic  
-- DynamoDB table for scenario storage  
-- Cognito user pool for authentication  
+
+- S3 bucket for frontend hosting
+- CloudFront distribution for content delivery
+- API Gateway for REST API
+- Lambda functions for backend logic
+- DynamoDB table for scenario storage
+- Cognito user pool for authentication
 
 Infrastructure is defined and deployed using AWS CDK.
 
 ---
-
 
 ## Implementation plan
 
 The project is implemented step by step, focusing on core functionality first.
 
 ### Step 1 – Foundation
-- Create repository and basic project structure  
-- Set up AWS account, IAM user, and budget  
-- Deploy a minimal React frontend via S3 and CloudFront  
+
+- Create repository and basic project structure
+- Set up AWS account, IAM user, and budget
+- Deploy a minimal React frontend via S3 and CloudFront
 
 ---
 
 ### Step 2 – Backend API
-- Create API Gateway and Lambda  
-- Define REST endpoints for the Scenario resource  
-- Implement basic CRUD handlers  
-- Return mock or static data initially  
+
+- Create API Gateway and Lambda
+- Define REST endpoints for the Scenario resource
+- Implement basic CRUD handlers
+- Return mock or static data initially
 
 ---
 
 ### Step 3 – Persistence
-- Add DynamoDB table  
-- Store and retrieve scenarios from DynamoDB  
-- Connect CRUD endpoints to persistent storage  
+
+- Add DynamoDB table
+- Store and retrieve scenarios from DynamoDB
+- Connect CRUD endpoints to persistent storage
 
 ---
 
 ### Step 4 – Authentication
-- Configure Cognito user pool  
-- Protect API endpoints  
-- Enforce role-based access rules  
+
+- Configure Cognito user pool
+- Protect API endpoints
+- Enforce role-based access rules
 
 ---
 
 ### Step 5 – Integration and UI
-- Extend the frontend with basic UI for viewing and editing scenarios  
-- Connect frontend to the authenticated API  
+
+- Extend the frontend with basic UI for viewing and editing scenarios
+- Connect frontend to the authenticated API
 - Complete end-to-end CRUD flow
 
 ---
@@ -166,10 +173,10 @@ The project is implemented step by step, focusing on core functionality first.
 
 ### Step 1 – Foundation
 
-- [x] Repository created with frontend and CDK directories  
-- [x] Initial React application scaffolded and verified locally  
-- [x] AWS account configured  
-- [x] Non-root IAM user created for development  
+- [x] Repository created with frontend and CDK directories
+- [x] Initial React application scaffolded and verified locally
+- [x] AWS account configured
+- [x] Non-root IAM user created for development
 - [x] AWS budget configured
 
 ### Step 2 – Backend API
@@ -187,3 +194,10 @@ The project is implemented step by step, focusing on core functionality first.
 - [x] Updated utility functions to use DynamoDB instead of returning mock data
 - [x] Verified data persistence and retrieval via API requests
 
+### Step 4 -
+
+- [x] Added AuthStack with Cognito user pool and user pool client
+- [x] Defined role-based access using Cognito groups editors and viewers
+- [x] Secured API Gateway endpoints with Cognito authorizer
+- [x] Implemented authorization checks in Lambda based on user groups
+- [x] Verified authenticated access

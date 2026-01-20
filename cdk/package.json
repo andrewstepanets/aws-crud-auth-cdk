@@ -6,7 +6,9 @@
         "build": "tsc",
         "watch": "tsc -w",
         "test": "jest",
-        "cdk": "cdk"
+        "cdk": "cdk",
+        "create:editor:user": "bash scripts/create-editor-user.sh",
+        "create:viewer:user": "bash scripts/create-viewer-user.sh"
     },
     "devDependencies": {
         "@types/aws-lambda": "^8.10.159",

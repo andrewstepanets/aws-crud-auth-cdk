@@ -1,14 +1,21 @@
 import { CfnOutput, RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
+import * as cognito from 'aws-cdk-lib/aws-cognito';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Construct } from 'constructs';
 import * as path from 'path';
 
+export interface RestApiStackProps extends StackProps {
+    userPool: cognito.UserPool;
+}
+
 export class RestApiStack extends Stack {
-    constructor(scope: Construct, id: string, props?: StackProps) {
+    constructor(scope: Construct, id: string, props: RestApiStackProps) {
         super(scope, id, props);
+
+        const { userPool } = props;
 
         const scenariosTable = new dynamodb.Table(this, 'ScenariosTable', {
             tableName: 'scenarios',
@@ -36,14 +43,33 @@ export class RestApiStack extends Stack {
             restApiName: 'ScenariosApi',
         });
 
+        const authorizer = new apigateway.CognitoUserPoolsAuthorizer(this, 'ScenariosAuthorizer', {
+            cognitoUserPools: [userPool],
+        });
+
         const scenarios = api.root.addResource('scenarios');
-        scenarios.addMethod('GET', new apigateway.LambdaIntegration(scenariosLambda));
-        scenarios.addMethod('POST', new apigateway.LambdaIntegration(scenariosLambda));
+        scenarios.addMethod('GET', new apigateway.LambdaIntegration(scenariosLambda), {
+            authorizer,
+            authorizationType: apigateway.AuthorizationType.COGNITO,
+        });
+        scenarios.addMethod('POST', new apigateway.LambdaIntegration(scenariosLambda), {
+            authorizer,
+            authorizationType: apigateway.AuthorizationType.COGNITO,
+        });
 
         const scenarioById = scenarios.addResource('{id}');
-        scenarioById.addMethod('GET', new apigateway.LambdaIntegration(scenariosLambda));
-        scenarioById.addMethod('PUT', new apigateway.LambdaIntegration(scenariosLambda));
-        scenarioById.addMethod('DELETE', new apigateway.LambdaIntegration(scenariosLambda));
+        scenarioById.addMethod('GET', new apigateway.LambdaIntegration(scenariosLambda), {
+            authorizer,
+            authorizationType: apigateway.AuthorizationType.COGNITO,
+        });
+        scenarioById.addMethod('PUT', new apigateway.LambdaIntegration(scenariosLambda), {
+            authorizer,
+            authorizationType: apigateway.AuthorizationType.COGNITO,
+        });
+        scenarioById.addMethod('DELETE', new apigateway.LambdaIntegration(scenariosLambda), {
+            authorizer,
+            authorizationType: apigateway.AuthorizationType.COGNITO,
+        });
 
         new CfnOutput(this, 'ScenariosApiUrl', {
             value: api.url,

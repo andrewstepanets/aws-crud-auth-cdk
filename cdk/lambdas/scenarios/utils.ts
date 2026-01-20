@@ -8,7 +8,7 @@ import {
     ScanCommand,
     UpdateCommand,
 } from '@aws-sdk/lib-dynamodb';
-import { APIGatewayEvent, APIGatewayProxyResult } from 'aws-lambda';
+import { APIGatewayEvent, APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { v4 as uuidv4 } from 'uuid';
 
 interface Scenario {
@@ -90,7 +90,7 @@ export const create = async (event: APIGatewayEvent): Promise<APIGatewayProxyRes
         steps: Array.isArray(body.steps) ? body.steps : [],
         expectedResult: body.expectedResult ?? '',
         components: Array.isArray(body.components) ? body.components : [],
-        createdBy: body.createdBy ?? 'unknown',
+        createdBy: event.requestContext.authorizer?.claims?.email,
         createdAt: new Date().toISOString(),
     };
 
@@ -191,4 +191,20 @@ const mapScenarioResponse = (item: GetCommandOutput['Item']): Scenario => ({
     components: item?.components,
     createdBy: item?.createdBy,
     createdAt: item?.createdAt,
+});
+
+export const getUserGroups = (event: APIGatewayProxyEvent): string[] => {
+    const claims = event.requestContext.authorizer?.claims;
+    const groups = claims?.['cognito:groups'];
+
+    if (!groups) return [];
+    return Array.isArray(groups) ? groups : [groups];
+};
+
+export const isEditor = (groups: string[]) => groups.includes('editors');
+
+export const forbidden = () => ({
+    statusCode: 403,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message: 'forbidden' }),
 });

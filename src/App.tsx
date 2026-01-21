@@ -1,20 +1,22 @@
-import { useState } from 'react';
-import './App.css';
+import { useAuth } from './auth/auth-context';
+import { Nav } from './components/nav';
+import { MainPage } from './pages/main';
 
 function App() {
-  const [count, setCount] = useState(0);
+    const { accessToken, roles, logout } = useAuth();
 
-  return (
-    <div className='App'>
-      <h1>Scenarios Service</h1>
-      <div className='card'>
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <button onClick={() => setCount(0)}>reset count</button>
-      </div>
-    </div>
-  );
+    if (!accessToken) {
+        return <div>Loading...</div>;
+    }
+
+    const isEditor = roles.includes('editors');
+
+    return (
+        <div className="App">
+            <Nav onSignOut={logout} />
+            <MainPage isEditor={isEditor} />
+        </div>
+    );
 }
 
 export default App;

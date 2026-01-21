@@ -1,13 +1,16 @@
-import { CfnOutput, RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
+import { CfnOutput, Duration, RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
 import { Construct } from 'constructs';
 
 export class AuthStack extends Stack {
-    public readonly userPool;
-    public readonly userPoolClient;
+    public readonly userPool: cognito.UserPool;
+    public readonly userPoolUiClient: cognito.UserPoolClient;
+    public readonly userPoolApiClient: cognito.UserPoolClient;
 
     constructor(scope: Construct, id: string, props?: StackProps) {
         super(scope, id, props);
+
+        const urls = ['https://dgmpvfufnkjzg.cloudfront.net', 'http://localhost:3000'];
 
         this.userPool = new cognito.UserPool(this, 'ScenariosUserPool', {
             userPoolName: 'scenarios-user-pool',
@@ -23,12 +26,34 @@ export class AuthStack extends Stack {
             removalPolicy: RemovalPolicy.DESTROY,
         });
 
-        this.userPoolClient = new cognito.UserPoolClient(this, 'ScenariosUserPoolClient', {
+        this.userPool.addDomain('ScenariosDomain', {
+            cognitoDomain: {
+                domainPrefix: `scenarios-auth-${this.account}`,
+            },
+        });
+
+        this.userPoolUiClient = new cognito.UserPoolClient(this, 'ScenariosUserPoolClient', {
             userPool: this.userPool,
+            generateSecret: false,
+            accessTokenValidity: Duration.minutes(10),
+            refreshTokenValidity: Duration.hours(4),
+            oAuth: {
+                flows: {
+                    authorizationCodeGrant: true,
+                },
+                scopes: [cognito.OAuthScope.OPENID, cognito.OAuthScope.EMAIL, cognito.OAuthScope.PROFILE],
+                callbackUrls: urls,
+                logoutUrls: urls,
+            },
+        });
+
+        this.userPoolApiClient = new cognito.UserPoolClient(this, 'ScenariosApiClient', {
+            userPool: this.userPool,
+            generateSecret: false,
             authFlows: {
                 userPassword: true,
-                userSrp: true,
             },
+            accessTokenValidity: Duration.minutes(10),
         });
 
         new cognito.CfnUserPoolGroup(this, 'EditorsGroup', {
@@ -46,7 +71,20 @@ export class AuthStack extends Stack {
         });
 
         new CfnOutput(this, 'UserPoolClientId', {
-            value: this.userPoolClient.userPoolClientId,
+            value: this.userPoolUiClient.userPoolClientId,
+        });
+
+        new CfnOutput(this, 'CognitoAuthorizeUrl', {
+            value:
+                `https://scenarios-auth-${this.account}.auth.${this.region}.amazoncognito.com/oauth2/authorize` +
+                `?client_id=${this.userPoolUiClient.userPoolClientId}` +
+                `&response_type=code` +
+                `&scope=openid+email+profile` +
+                `&redirect_uri=https://dgmpvfufnkjzg.cloudfront.net`,
+        });
+
+        new CfnOutput(this, 'ApiClientId', {
+            value: this.userPoolApiClient.userPoolClientId,
         });
     }
 }

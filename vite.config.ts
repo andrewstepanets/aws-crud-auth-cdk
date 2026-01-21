@@ -3,10 +3,14 @@ import { defineConfig } from 'vite';
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
-  root: 'src',
-  build: {
-    outDir: '../build',
-    emptyOutDir: true,
-  },
+    plugins: [react()],
+    root: 'src',
+    server: {
+        port: 3000,
+        strictPort: true,
+    },
+    build: {
+        outDir: '../build',
+        emptyOutDir: true,
+    },
 });

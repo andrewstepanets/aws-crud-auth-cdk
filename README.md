@@ -215,10 +215,18 @@ Avoid returning all records in a single request
 - [x] Updated utility functions to use DynamoDB instead of returning mock data
 - [x] Verified data persistence and retrieval via API requests
 
-### Step 4 -
+### Step 4 - Authentication
 
 - [x] Added AuthStack with Cognito user pool and user pool client
 - [x] Defined role-based access using Cognito groups editors and viewers
 - [x] Secured API Gateway endpoints with Cognito authorizer
 - [x] Implemented authorization checks in Lambda based on user groups
 - [x] Verified authenticated access
+
+### Step 5 – Integration and UI
+
+- [x] Implemented frontend pages for creating, viewing and editing scenarios
+- [x] Added delete scenario functionality to the table action menu
+- [x] Connected frontend to the backend API using react-query
+- [x] Built a reusable add/edit form with validation using react-hook-form and yup
+- [x] Implemented loading and error states across all main pages

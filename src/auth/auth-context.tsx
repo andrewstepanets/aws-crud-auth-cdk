@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { changeCodeForToken, login, logout } from './auth-service';
+import { setAuthToken } from './token-provider';
 
 interface AuthState {
     accessToken: string | null;
@@ -18,10 +19,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const [roles, setRoles] = useState<string[]>([]);
 
     const authCodeConsumedRef = useRef(false); // to avoid two code change
+    const isLoggingOut = useRef(false);
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const code = params.get('code');
+
+        if (isLoggingOut.current) {
+            return;
+        }
 
         if (accessToken) {
             return;
@@ -31,7 +37,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
             authCodeConsumedRef.current = true;
 
             changeCodeForToken(code).then(tokens => {
-                setAccessToken(tokens.access_token);
+                setAccessToken(tokens.id_token); // React state
+                setAuthToken(tokens.id_token); // API
 
                 const payload = JSON.parse(atob(tokens.id_token.split('.')[1]));
 
@@ -48,12 +55,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
     }, [accessToken]);
 
+    function handleLogout() {
+        isLoggingOut.current = true;
+        setAccessToken(null);
+        setRoles([]);
+        setAuthToken(null);
+        logout();
+    }
+
     return (
         <AuthContext.Provider
             value={{
                 accessToken,
                 roles,
-                logout,
+                logout: handleLogout,
             }}
         >
             {children}

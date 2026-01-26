@@ -10,16 +10,16 @@ export const handler = async (event: APIGatewayProxyEvent) => {
 
     switch (httpMethod) {
         case 'GET':
-            return id ? getById(id) : getAll();
+            return id ? getById(id, event) : getAll(event);
         case 'POST':
-            if (!editor) return forbidden();
+            if (!editor) return forbidden(event);
             return create(event);
         case 'PUT':
-            if (!editor) return forbidden();
+            if (!editor) return forbidden(event);
             return update(id, event);
         case 'DELETE':
-            if (!editor) return forbidden();
-            return remove(id);
+            if (!editor) return forbidden(event);
+            return remove(id, event);
         default:
             return methodNotAllowed();
     }

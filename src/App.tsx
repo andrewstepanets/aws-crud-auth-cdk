@@ -1,22 +1,15 @@
 import { useAuth } from './auth/auth-context';
-import { Nav } from './components/nav';
-import { MainPage } from './pages/main';
+import { Loader } from './components/loader';
+import { AppRoutes } from './routes/app-routes';
 
 function App() {
-    const { accessToken, roles, logout } = useAuth();
+    const { accessToken } = useAuth();
 
     if (!accessToken) {
-        return <div>Loading...</div>;
+        return <Loader />;
     }
 
-    const isEditor = roles.includes('editors');
-
-    return (
-        <div className="App">
-            <Nav onSignOut={logout} />
-            <MainPage isEditor={isEditor} />
-        </div>
-    );
+    return <AppRoutes />;
 }
 
 export default App;

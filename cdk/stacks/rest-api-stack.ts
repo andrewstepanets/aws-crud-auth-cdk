@@ -41,6 +41,11 @@ export class RestApiStack extends Stack {
 
         const api = new apigateway.RestApi(this, 'ScenariosApi', {
             restApiName: 'ScenariosApi',
+            defaultCorsPreflightOptions: {
+                allowOrigins: ['http://localhost:3000', 'https://dgmpvfufnkjzg.cloudfront.net'],
+                allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+                allowHeaders: ['Content-Type', 'Authorization'],
+            },
         });
 
         const authorizer = new apigateway.CognitoUserPoolsAuthorizer(this, 'ScenariosAuthorizer', {

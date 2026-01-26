@@ -23,6 +23,22 @@ interface Scenario {
     createdAt: string;
 }
 
+const ALLOWED_ORIGINS = ['http://localhost:3000', 'https://dgmpvfufnkjzg.cloudfront.net'];
+
+const getCorsHeaders = (event?: APIGatewayEvent): Record<string, string> => {
+    console.log('EVENT', event);
+    const origin = event?.headers?.origin;
+
+    if (origin && ALLOWED_ORIGINS.includes(origin)) {
+        return {
+            'Access-Control-Allow-Origin': origin,
+            'Access-Control-Allow-Credentials': 'true',
+        };
+    }
+
+    return {};
+};
+
 const TABLE_NAME = process.env.SCENARIOS_TABLE_NAME;
 
 if (!TABLE_NAME) {
@@ -32,7 +48,7 @@ if (!TABLE_NAME) {
 const client = new DynamoDBClient({});
 const ddb = DynamoDBDocumentClient.from(client);
 
-export const getAll = async (): Promise<APIGatewayProxyResult> => {
+export const getAll = async (event: APIGatewayEvent): Promise<APIGatewayProxyResult> => {
     const result = await ddb.send(
         new ScanCommand({
             TableName: TABLE_NAME,
@@ -43,12 +59,12 @@ export const getAll = async (): Promise<APIGatewayProxyResult> => {
 
     return {
         statusCode: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event) },
         body: JSON.stringify({ items }),
     };
 };
 
-export const getById = async (id?: string): Promise<APIGatewayProxyResult> => {
+export const getById = async (id?: string, event?: APIGatewayEvent): Promise<APIGatewayProxyResult> => {
     const result = await ddb.send(
         new GetCommand({
             TableName: TABLE_NAME,
@@ -59,14 +75,14 @@ export const getById = async (id?: string): Promise<APIGatewayProxyResult> => {
     if (!result.Item) {
         return {
             statusCode: 404,
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event) },
             body: JSON.stringify({ message: 'not found' }),
         };
     }
 
     return {
         statusCode: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event) },
         body: JSON.stringify(mapScenarioResponse(result.Item)),
     };
 };
@@ -75,7 +91,7 @@ export const create = async (event: APIGatewayEvent): Promise<APIGatewayProxyRes
     if (!event.body) {
         return {
             statusCode: 400,
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event) },
             body: JSON.stringify({ message: 'invalid request body' }),
         };
     }
@@ -103,7 +119,7 @@ export const create = async (event: APIGatewayEvent): Promise<APIGatewayProxyRes
 
     return {
         statusCode: 201,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event) },
         body: JSON.stringify(item),
     };
 };
@@ -112,7 +128,7 @@ export const update = async (id?: string, event?: APIGatewayEvent): Promise<APIG
     if (!event?.body) {
         return {
             statusCode: 400,
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event) },
             body: JSON.stringify({ message: 'missing request body' }),
         };
     }
@@ -150,12 +166,12 @@ export const update = async (id?: string, event?: APIGatewayEvent): Promise<APIG
 
     return {
         statusCode: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event) },
         body: JSON.stringify(mapScenarioResponse(result.Attributes)),
     };
 };
 
-export const remove = async (id?: string): Promise<APIGatewayProxyResult> => {
+export const remove = async (id?: string, event?: APIGatewayEvent): Promise<APIGatewayProxyResult> => {
     await ddb.send(
         new DeleteCommand({
             TableName: TABLE_NAME,
@@ -165,7 +181,7 @@ export const remove = async (id?: string): Promise<APIGatewayProxyResult> => {
 
     return {
         statusCode: 204,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event) },
         body: '',
     };
 };
@@ -203,8 +219,8 @@ export const getUserGroups = (event: APIGatewayProxyEvent): string[] => {
 
 export const isEditor = (groups: string[]) => groups.includes('editors');
 
-export const forbidden = () => ({
+export const forbidden = (event?: APIGatewayEvent) => ({
     statusCode: 403,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event) },
     body: JSON.stringify({ message: 'forbidden' }),
 });

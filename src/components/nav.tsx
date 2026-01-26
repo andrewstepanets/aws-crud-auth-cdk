@@ -1,3 +1,5 @@
+import { Link } from 'react-router';
+
 interface NavProps {
     onSignOut: () => void;
 }
@@ -5,7 +7,9 @@ interface NavProps {
 export function Nav({ onSignOut }: NavProps) {
     return (
         <header className="nav">
-            <h1>Scenarios Service</h1>
+            <h1>
+                <Link to="/">Scenarios Service</Link>
+            </h1>
             <button onClick={onSignOut}>Sign out</button>
         </header>
     );

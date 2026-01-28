@@ -169,9 +169,17 @@ The project is implemented step by step, focusing on core functionality first.
 
 ---
 
-## Next steps
+### Step 7 – Pagination, filtering, and sorting
 
-### Step 7 – Audit logging and observability
+Avoid returning all records in a single request
+
+- Add pagination to the list endpoint
+- Support limits and continuation between requests
+- Add simple filtering
+
+---
+
+### Step 8 – Audit logging and observability
 
 Add basic audit logging to record changes made to scenarios.
 To understand who changed data and when and simplify debugging and investigation
@@ -179,16 +187,6 @@ To understand who changed data and when and simplify debugging and investigation
 - Log CREATE, UPDATE, and DELETE actions
 - Record which user performed the action
 - Store audit records in a separate table
-
----
-
-### Step 8 – Pagination, filtering, and sorting
-
-Avoid returning all records in a single request
-
-- Add pagination to the list endpoint
-- Support limits and continuation between requests
-- Add simple filtering
 
 ## Current status
 

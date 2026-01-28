@@ -26,7 +26,6 @@ interface Scenario {
 const ALLOWED_ORIGINS = ['http://localhost:3000', 'https://dgmpvfufnkjzg.cloudfront.net'];
 
 const getCorsHeaders = (event?: APIGatewayEvent): Record<string, string> => {
-    console.log('EVENT', event);
     const origin = event?.headers?.origin;
 
     if (origin && ALLOWED_ORIGINS.includes(origin)) {

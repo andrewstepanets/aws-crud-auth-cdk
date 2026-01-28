@@ -3,9 +3,9 @@ import { Loader } from './components/loader';
 import { AppRoutes } from './routes/app-routes';
 
 function App() {
-    const { accessToken } = useAuth();
+    const { idToken } = useAuth();
 
-    if (!accessToken) {
+    if (!idToken) {
         return <Loader />;
     }
 

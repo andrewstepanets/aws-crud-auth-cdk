@@ -1,9 +1,10 @@
+import { jwtDecode } from 'jwt-decode';
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { changeCodeForToken, login, logout } from './auth-service';
-import { setAuthToken } from './token-provider';
+import { TokenPayload } from './utils';
 
 interface AuthState {
-    accessToken: string | null;
+    idToken: string | null;
     roles: string[];
     logout: () => void;
 }
@@ -15,34 +16,65 @@ interface AuthProviderProps {
 const AuthContext = createContext<AuthState | null>(null);
 
 export function AuthProvider({ children }: AuthProviderProps) {
-    const [accessToken, setAccessToken] = useState<string | null>(null);
-    const [roles, setRoles] = useState<string[]>([]);
+    const [idToken, setIdToken] = useState<string | null>(localStorage.getItem('id_token'));
+    const [roles, setRoles] = useState<string[]>(() => {
+        const token = localStorage.getItem('id_token');
+        if (token) {
+            const payload = jwtDecode<TokenPayload>(token);
+            return payload['cognito:groups'] ?? [];
+        }
+        return [];
+    });
 
-    const authCodeConsumedRef = useRef(false); // to avoid two code change
+    const authCodeConsumedRef = useRef(false);
     const isLoggingOut = useRef(false);
 
     useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        const code = params.get('code');
+        const syncAuth = () => {
+            const token = localStorage.getItem('id_token');
+            setIdToken(token);
 
+            if (token) {
+                const payload = jwtDecode<TokenPayload>(token);
+                setRoles(payload['cognito:groups'] ?? []);
+            } else {
+                setRoles([]);
+            }
+        };
+
+        window.addEventListener('auth_changed', syncAuth);
+        window.addEventListener('storage', syncAuth);
+
+        return () => {
+            window.removeEventListener('auth_changed', syncAuth);
+            window.removeEventListener('storage', syncAuth);
+        };
+    }, []);
+
+    useEffect(() => {
         if (isLoggingOut.current) {
             return;
         }
 
-        if (accessToken) {
+        if (idToken) {
             return;
         }
+
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get('code');
 
         if (code && !authCodeConsumedRef.current) {
             authCodeConsumedRef.current = true;
 
             changeCodeForToken(code).then(tokens => {
-                setAccessToken(tokens.id_token); // React state
-                setAuthToken(tokens.id_token); // API
+                setIdToken(tokens.id_token);
 
-                const payload = JSON.parse(atob(tokens.id_token.split('.')[1]));
-
+                const payload = jwtDecode<TokenPayload>(tokens.id_token);
                 setRoles(payload['cognito:groups'] ?? []);
+
+                localStorage.setItem('id_token', tokens.id_token);
+                localStorage.setItem('access_token', tokens.access_token);
+                localStorage.setItem('refresh_token', tokens.refresh_token);
 
                 window.history.replaceState({}, '', window.location.pathname);
             });
@@ -50,23 +82,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
             return;
         }
 
-        if (!code) {
+        if (!code && !localStorage.getItem('id_token')) {
             login();
         }
-    }, [accessToken]);
+    }, [idToken]);
 
     function handleLogout() {
         isLoggingOut.current = true;
-        setAccessToken(null);
+        setIdToken(null);
         setRoles([]);
-        setAuthToken(null);
+
+        localStorage.removeItem('id_token');
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+
         logout();
     }
 
     return (
         <AuthContext.Provider
             value={{
-                accessToken,
+                idToken,
                 roles,
                 logout: handleLogout,
             }}

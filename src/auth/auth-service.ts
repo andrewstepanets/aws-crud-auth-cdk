@@ -40,3 +40,23 @@ export async function changeCodeForToken(code: string) {
 
     return res.json();
 }
+
+export async function refreshTokens(refreshToken: string) {
+    const body = new URLSearchParams({
+        grant_type: 'refresh_token',
+        client_id: authConfig.clientId,
+        refresh_token: refreshToken,
+    });
+
+    const res = await fetch(`https://${authConfig.domain}/oauth2/token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body,
+    });
+
+    if (!res.ok) {
+        throw new Error('Token refresh failed');
+    }
+
+    return res.json();
+}

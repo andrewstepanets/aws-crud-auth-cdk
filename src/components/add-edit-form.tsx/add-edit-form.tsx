@@ -33,14 +33,6 @@ export function AddEditForm({ defaultValues, submit, isPending, isEdit }: AddEdi
     });
 
     const onSubmit = (values: ScenarioFormValues) => {
-        console.log('FORM DATA', {
-            ticket: values.ticket,
-            title: values.title,
-            description: values.description,
-            steps: values.steps.map(step => step.value ?? ''),
-            expectedResult: values.expectedResult,
-            components: values.components.map(c => c.value),
-        });
         submit(values);
     };
 
@@ -55,12 +47,12 @@ export function AddEditForm({ defaultValues, submit, isPending, isEdit }: AddEdi
                 <div className="form-group">
                     <label htmlFor="title">Title</label>
                     <input id="title" {...register('title')} />
-                    {errors.ticket && <span className="error">{errors.title?.message}</span>}
+                    {errors.title && <span className="error">{errors.title?.message}</span>}
                 </div>
                 <div className="form-group">
                     <label htmlFor="description">Description</label>
                     <textarea id="description" {...register('description')} rows={4} />
-                    {errors.ticket && <span className="error">{errors.description?.message}</span>}
+                    {errors.description && <span className="error">{errors.description?.message}</span>}
                 </div>
                 <div className="form-group">
                     <label>Steps</label>
@@ -73,7 +65,7 @@ export function AddEditForm({ defaultValues, submit, isPending, isEdit }: AddEdi
                                     {...register(`steps.${index}.value`)}
                                     placeholder={`Step ${index + 1}`}
                                 />
-                                {errors.ticket && (
+                                {errors.steps?.[index]?.value && (
                                     <span className="error">{errors.steps?.[index]?.value?.message}</span>
                                 )}
                             </div>
@@ -95,7 +87,7 @@ export function AddEditForm({ defaultValues, submit, isPending, isEdit }: AddEdi
                 <div className="form-group">
                     <label htmlFor="expectedResult">Expected result</label>
                     <textarea id="expectedResult" {...register('expectedResult')} rows={4} />
-                    {errors.ticket && <span className="error">{errors.expectedResult?.message}</span>}
+                    {errors.expectedResult && <span className="error">{errors.expectedResult?.message}</span>}
                 </div>
                 <div className="form-group">
                     <label htmlFor="components">Components</label>
@@ -112,7 +104,7 @@ export function AddEditForm({ defaultValues, submit, isPending, isEdit }: AddEdi
                             />
                         )}
                     />
-                    {errors.ticket && <span className="error">{errors.components?.message}</span>}
+                    {errors.components && <span className="error">{errors.components?.message}</span>}
                 </div>
                 <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
                     <button type="submit" className="primary-button" disabled={isPending}>

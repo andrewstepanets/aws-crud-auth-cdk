@@ -30,14 +30,6 @@ export default function ScenarioEdit() {
     }
 
     const onSubmit = (data: ScenarioFormValues) => {
-        console.log('FORM DATA', {
-            ticket: data.ticket,
-            title: data.title,
-            description: data.description,
-            steps: data.steps.map(step => step.value ?? ''),
-            expectedResult: data.expectedResult,
-            components: data.components.map(c => c.value),
-        });
         updateScenario({
             id: id ?? '',
             ticket: data.ticket,

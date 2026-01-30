@@ -2,10 +2,9 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import {
     DeleteCommand,
     DynamoDBDocumentClient,
-    GetCommand,
     GetCommandOutput,
     PutCommand,
-    ScanCommand,
+    QueryCommand,
     UpdateCommand,
 } from '@aws-sdk/lib-dynamodb';
 import { APIGatewayEvent, APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
@@ -13,6 +12,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 interface Scenario {
     id: string;
+    pk?: string;
     ticket: string;
     title: string;
     description: string;
@@ -25,20 +25,7 @@ interface Scenario {
 
 const ALLOWED_ORIGINS = ['http://localhost:3000', 'https://dgmpvfufnkjzg.cloudfront.net'];
 
-const getCorsHeaders = (event?: APIGatewayEvent): Record<string, string> => {
-    const origin = event?.headers?.origin;
-
-    if (origin && ALLOWED_ORIGINS.includes(origin)) {
-        return {
-            'Access-Control-Allow-Origin': origin,
-            'Access-Control-Allow-Credentials': 'true',
-        };
-    }
-
-    return {};
-};
-
-const TABLE_NAME = process.env.SCENARIOS_TABLE_NAME;
+const TABLE_NAME = process.env.SCENARIOS_V2_TABLE_NAME;
 
 if (!TABLE_NAME) {
     throw new Error('SCENARIOS_TABLE_NAME is not defined');
@@ -48,30 +35,72 @@ const client = new DynamoDBClient({});
 const ddb = DynamoDBDocumentClient.from(client);
 
 export const getAll = async (event: APIGatewayEvent): Promise<APIGatewayProxyResult> => {
-    const result = await ddb.send(
-        new ScanCommand({
-            TableName: TABLE_NAME,
-        })
-    );
+    const queryParams = event.queryStringParameters || {};
+    const limit = parseInt(queryParams.limit || '5');
+    const { createdBy } = queryParams;
 
-    const items = (result.Items ?? []).map(mapScenarioResponse);
+    const nextKey = queryParams.nextKey
+        ? JSON.parse(Buffer.from(queryParams.nextKey, 'base64').toString('utf8'))
+        : undefined;
+    let result;
+
+    if (createdBy) {
+        result = await ddb.send(
+            new QueryCommand({
+                TableName: TABLE_NAME,
+                IndexName: 'createdBy-index',
+                KeyConditionExpression: 'createdBy = :author',
+                ExpressionAttributeValues: {
+                    ':author': createdBy,
+                },
+                Limit: limit,
+                ExclusiveStartKey: nextKey,
+                ScanIndexForward: false,
+            })
+        );
+    } else {
+        result = await ddb.send(
+            new QueryCommand({
+                TableName: TABLE_NAME,
+                KeyConditionExpression: 'pk = :pkValue',
+                ExpressionAttributeValues: {
+                    ':pkValue': 'SCENARIO',
+                },
+                Limit: limit,
+                ExclusiveStartKey: nextKey,
+                ScanIndexForward: false,
+            })
+        );
+    }
+
+    let items = (result.Items ?? []).map(mapScenarioResponse);
+
+    const response = {
+        items,
+        nextKey: result.LastEvaluatedKey
+            ? Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString('base64')
+            : undefined,
+    };
 
     return {
         statusCode: 200,
         headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event) },
-        body: JSON.stringify({ items }),
+        body: JSON.stringify(response),
     };
 };
 
 export const getById = async (id?: string, event?: APIGatewayEvent): Promise<APIGatewayProxyResult> => {
-    const result = await ddb.send(
-        new GetCommand({
-            TableName: TABLE_NAME,
-            Key: { id },
-        })
-    );
+    if (!id) {
+        return {
+            statusCode: 400,
+            headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event) },
+            body: JSON.stringify({ message: 'missing id' }),
+        };
+    }
 
-    if (!result.Item) {
+    const item = await findScenarioById(id);
+
+    if (!item) {
         return {
             statusCode: 404,
             headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event) },
@@ -82,7 +111,7 @@ export const getById = async (id?: string, event?: APIGatewayEvent): Promise<API
     return {
         statusCode: 200,
         headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event) },
-        body: JSON.stringify(mapScenarioResponse(result.Item)),
+        body: JSON.stringify(mapScenarioResponse(item)),
     };
 };
 
@@ -99,6 +128,7 @@ export const create = async (event: APIGatewayEvent): Promise<APIGatewayProxyRes
 
     const item = {
         id: uuidv4(),
+        pk: 'SCENARIO',
         ticket: body.ticket ?? '',
         title: body.title ?? '',
         description: body.description ?? '',
@@ -119,11 +149,19 @@ export const create = async (event: APIGatewayEvent): Promise<APIGatewayProxyRes
     return {
         statusCode: 201,
         headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event) },
-        body: JSON.stringify(item),
+        body: JSON.stringify(mapScenarioResponse(item)),
     };
 };
 
 export const update = async (id?: string, event?: APIGatewayEvent): Promise<APIGatewayProxyResult> => {
+    if (!id) {
+        return {
+            statusCode: 400,
+            headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event) },
+            body: JSON.stringify({ message: 'missing id' }),
+        };
+    }
+
     if (!event?.body) {
         return {
             statusCode: 400,
@@ -133,6 +171,16 @@ export const update = async (id?: string, event?: APIGatewayEvent): Promise<APIG
     }
 
     const body = JSON.parse(event.body);
+
+    const item = await findScenarioById(id);
+
+    if (!item) {
+        return {
+            statusCode: 404,
+            headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event) },
+            body: JSON.stringify({ message: 'not found' }),
+        };
+    }
 
     const expressionAttributeNames: Record<string, string> = {};
     const expressionAttributeValues: Record<string, unknown> = {};
@@ -151,14 +199,24 @@ export const update = async (id?: string, event?: APIGatewayEvent): Promise<APIG
         }
     });
 
+    if (updates.length === 0) {
+        return {
+            statusCode: 400,
+            headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event) },
+            body: JSON.stringify({ message: 'no fields to update' }),
+        };
+    }
+
     const result = await ddb.send(
         new UpdateCommand({
             TableName: TABLE_NAME,
-            Key: { id },
+            Key: {
+                pk: item.pk,
+                createdAt: item.createdAt,
+            },
             UpdateExpression: `SET ${updates.join(', ')}`,
             ExpressionAttributeNames: expressionAttributeNames,
             ExpressionAttributeValues: expressionAttributeValues,
-            ConditionExpression: 'attribute_exists(id)',
             ReturnValues: 'ALL_NEW',
         })
     );
@@ -171,10 +229,31 @@ export const update = async (id?: string, event?: APIGatewayEvent): Promise<APIG
 };
 
 export const remove = async (id?: string, event?: APIGatewayEvent): Promise<APIGatewayProxyResult> => {
+    if (!id) {
+        return {
+            statusCode: 400,
+            headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event) },
+            body: JSON.stringify({ message: 'missing id' }),
+        };
+    }
+
+    const item = await findScenarioById(id);
+
+    if (!item) {
+        return {
+            statusCode: 404,
+            headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event) },
+            body: JSON.stringify({ message: 'not found' }),
+        };
+    }
+
     await ddb.send(
         new DeleteCommand({
             TableName: TABLE_NAME,
-            Key: { id },
+            Key: {
+                pk: item.pk,
+                createdAt: item.createdAt,
+            },
         })
     );
 
@@ -223,3 +302,31 @@ export const forbidden = (event?: APIGatewayEvent) => ({
     headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event) },
     body: JSON.stringify({ message: 'forbidden' }),
 });
+
+const getCorsHeaders = (event?: APIGatewayEvent): Record<string, string> => {
+    const origin = event?.headers?.origin;
+
+    if (origin && ALLOWED_ORIGINS.includes(origin)) {
+        return {
+            'Access-Control-Allow-Origin': origin,
+            'Access-Control-Allow-Credentials': 'true',
+        };
+    }
+
+    return {};
+};
+
+const findScenarioById = async (id: string) => {
+    const result = await ddb.send(
+        new QueryCommand({
+            TableName: TABLE_NAME,
+            IndexName: 'id-index',
+            KeyConditionExpression: 'id = :id',
+            ExpressionAttributeValues: {
+                ':id': id,
+            },
+            Limit: 1,
+        })
+    );
+    return result.Items?.[0];
+};

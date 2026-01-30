@@ -2,7 +2,8 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router';
 import Select from 'react-select';
-import { COMPONENT_OPTIONS, ScenarioFormValues } from './types';
+import { COMPONENT_OPTIONS } from '../types';
+import { ScenarioFormValues } from './types';
 import { scenarioSchema } from './validation';
 
 export interface AddEditFormProps {

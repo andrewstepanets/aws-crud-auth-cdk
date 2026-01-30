@@ -37,4 +37,11 @@ export interface UpdateScenario {
 
 export interface GetScenariosResponse {
     items: Scenario[];
+    nextKey?: string;
+}
+
+export interface SearchParams {
+    nextKey?: string;
+    limit?: number;
+    createdBy?: string;
 }

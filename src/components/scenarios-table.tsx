@@ -1,6 +1,8 @@
 import { ColumnDef, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { useDeleteScenario, useGetAllScenarios } from '../api/hooks';
+import { SearchParams } from '../api/types';
 import { Loader } from './loader';
 
 export interface Scenario {
@@ -14,6 +16,7 @@ export interface Scenario {
 
 interface ScenarioTableProps {
     isEditor: boolean;
+    params?: SearchParams;
 }
 
 interface ActionsMenuProps {
@@ -23,8 +26,25 @@ interface ActionsMenuProps {
     isDeleting: boolean;
 }
 
-export function ScenariosTable({ isEditor }: ScenarioTableProps) {
-    const { data = [], isFetching } = useGetAllScenarios();
+type PaginationStack = (string | undefined)[];
+
+export function ScenariosTable({ isEditor, params }: ScenarioTableProps) {
+    const [keysStack, setKeysStack] = useState<PaginationStack>([undefined]);
+    const [pageIndex, setPageIndex] = useState(0);
+
+    useEffect(() => {
+        setKeysStack([undefined]);
+        setPageIndex(0);
+    }, [params?.createdBy]);
+
+    const nextKey = keysStack[pageIndex];
+    console.log('nextKey', nextKey);
+    const { data, isFetching } = useGetAllScenarios({
+        ...params,
+        nextKey,
+    });
+    const scenarios = data?.items ?? [];
+
     const { mutate: deleteScenario, isPending, variables: deletingId } = useDeleteScenario();
 
     const columns: ColumnDef<Scenario>[] = [
@@ -76,36 +96,68 @@ export function ScenariosTable({ isEditor }: ScenarioTableProps) {
     ];
 
     const table = useReactTable({
-        data,
+        data: scenarios,
         columns,
+        manualPagination: true,
         getCoreRowModel: getCoreRowModel(),
     });
 
     return isFetching ? (
         <Loader />
     ) : (
-        <table className="scenarios-table">
-            <thead>
-                {table.getHeaderGroups().map(headerGroup => (
-                    <tr key={headerGroup.id}>
-                        {headerGroup.headers.map(header => (
-                            <th key={header.id} className={`col-${header.id}`}>
-                                {flexRender(header.column.columnDef.header, header.getContext())}
-                            </th>
-                        ))}
-                    </tr>
-                ))}
-            </thead>
-            <tbody>
-                {table.getRowModel().rows.map(row => (
-                    <tr key={row.id}>
-                        {row.getVisibleCells().map(cell => (
-                            <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
-                        ))}
-                    </tr>
-                ))}
-            </tbody>
-        </table>
+        <div>
+            <table className="scenarios-table">
+                <thead>
+                    {table.getHeaderGroups().map(headerGroup => (
+                        <tr key={headerGroup.id}>
+                            {headerGroup.headers.map(header => (
+                                <th key={header.id} className={`col-${header.id}`}>
+                                    {flexRender(header.column.columnDef.header, header.getContext())}
+                                </th>
+                            ))}
+                        </tr>
+                    ))}
+                </thead>
+                <tbody>
+                    {table.getRowModel().rows.map(row => (
+                        <tr key={row.id}>
+                            {row.getVisibleCells().map(cell => (
+                                <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                            ))}
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+            <div className="pagination">
+                <button
+                    disabled={pageIndex === 0 || isFetching}
+                    onClick={() => {
+                        setPageIndex(prev => prev - 1);
+                    }}
+                >
+                    Prev
+                </button>
+                <button
+                    disabled={!data?.nextKey || isFetching}
+                    onClick={() => {
+                        setKeysStack(prev => {
+                            const nextIndex = pageIndex + 1;
+
+                            if (prev[nextIndex]) {
+                                return prev;
+                            }
+
+                            const copy = [...prev];
+                            copy[nextIndex] = data?.nextKey;
+                            return copy;
+                        });
+                        setPageIndex(prev => prev + 1);
+                    }}
+                >
+                    Next
+                </button>
+            </div>
+        </div>
     );
 }
 

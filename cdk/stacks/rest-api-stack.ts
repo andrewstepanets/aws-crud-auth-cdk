@@ -27,6 +27,42 @@ export class RestApiStack extends Stack {
             removalPolicy: RemovalPolicy.DESTROY,
         });
 
+        const scenariosV2Table = new dynamodb.Table(this, 'ScenariosV2Table', {
+            tableName: 'scenarios-v2',
+            partitionKey: {
+                name: 'pk',
+                type: dynamodb.AttributeType.STRING,
+            },
+            sortKey: {
+                name: 'createdAt',
+                type: dynamodb.AttributeType.STRING,
+            },
+            billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+            removalPolicy: RemovalPolicy.DESTROY,
+        });
+
+        scenariosV2Table.addGlobalSecondaryIndex({
+            indexName: 'id-index',
+            partitionKey: {
+                name: 'id',
+                type: dynamodb.AttributeType.STRING,
+            },
+            projectionType: dynamodb.ProjectionType.ALL,
+        });
+
+        scenariosV2Table.addGlobalSecondaryIndex({
+            indexName: 'createdBy-index',
+            partitionKey: {
+                name: 'createdBy',
+                type: dynamodb.AttributeType.STRING,
+            },
+            sortKey: {
+                name: 'createdAt',
+                type: dynamodb.AttributeType.STRING,
+            },
+            projectionType: dynamodb.ProjectionType.ALL,
+        });
+
         const scenariosLambda = new NodejsFunction(this, 'ScenariosHandler', {
             functionName: 'scenarios-handler',
             runtime: lambda.Runtime.NODEJS_22_X,
@@ -34,10 +70,12 @@ export class RestApiStack extends Stack {
             handler: 'handler',
             environment: {
                 SCENARIOS_TABLE_NAME: scenariosTable.tableName,
+                SCENARIOS_V2_TABLE_NAME: scenariosV2Table.tableName,
             },
         });
 
         scenariosTable.grantReadWriteData(scenariosLambda);
+        scenariosV2Table.grantReadWriteData(scenariosLambda);
 
         const api = new apigateway.RestApi(this, 'ScenariosApi', {
             restApiName: 'ScenariosApi',

@@ -1,16 +1,17 @@
 import { useMutation, UseMutationOptions, useQuery, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
 import { createScenario, deleteScenario, getAllScenarios, getScenarioById, updateScenario } from './api';
-import { CreateScenario, Scenario, UpdateScenario } from './types';
+import { CreateScenario, GetScenariosResponse, Scenario, SearchParams, UpdateScenario } from './types';
 
 export const scenariosQueryKeys = {
     all: ['scenarios'] as const,
     oneScenario: (id: string) => ['scenarios', id] as const,
 };
 
-export function useGetAllScenarios(options?: UseQueryOptions<Scenario[]>) {
-    return useQuery<Scenario[]>({
-        queryKey: scenariosQueryKeys.all,
-        queryFn: getAllScenarios,
+export function useGetAllScenarios(params?: SearchParams, options?: UseQueryOptions<GetScenariosResponse>) {
+    return useQuery<GetScenariosResponse>({
+        queryKey: ['scenarios', params],
+        queryFn: () => getAllScenarios({ ...params, limit: 5 }),
+        placeholderData: previousData => previousData,
         ...options,
     });
 }

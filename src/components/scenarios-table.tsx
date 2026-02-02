@@ -31,14 +31,20 @@ type PaginationStack = (string | undefined)[];
 export function ScenariosTable({ isEditor, params }: ScenarioTableProps) {
     const [keysStack, setKeysStack] = useState<PaginationStack>([undefined]);
     const [pageIndex, setPageIndex] = useState(0);
+    const [prevCreatedBy, setPrevCreatedBy] = useState<string | undefined>(undefined);
+
+    const filtersChanged = params?.createdBy !== prevCreatedBy;
 
     useEffect(() => {
-        setKeysStack([undefined]);
-        setPageIndex(0);
-    }, [params?.createdBy]);
+        if (filtersChanged) {
+            setKeysStack([undefined]);
+            setPageIndex(0);
+            setPrevCreatedBy(params?.createdBy);
+        }
+    }, [params?.createdBy, filtersChanged]);
 
-    const nextKey = keysStack[pageIndex];
-    console.log('nextKey', nextKey);
+    const nextKey = filtersChanged ? undefined : keysStack[pageIndex];
+
     const { data, isFetching } = useGetAllScenarios({
         ...params,
         nextKey,

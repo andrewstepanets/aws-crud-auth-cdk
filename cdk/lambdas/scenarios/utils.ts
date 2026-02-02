@@ -25,7 +25,7 @@ interface Scenario {
 
 const ALLOWED_ORIGINS = ['http://localhost:3000', 'https://dgmpvfufnkjzg.cloudfront.net'];
 
-const TABLE_NAME = process.env.SCENARIOS_V2_TABLE_NAME;
+const TABLE_NAME = process.env.SCENARIOS_TABLE_NAME;
 
 if (!TABLE_NAME) {
     throw new Error('SCENARIOS_TABLE_NAME is not defined');

@@ -239,3 +239,17 @@ To understand who changed data and when and simplify debugging and investigation
 - [x] Connected frontend to the backend API using react-query
 - [x] Built a reusable add/edit form with validation using react-hook-form and yup
 - [x] Implemented loading and error states across all main pages
+
+### Step 6 - Testing
+
+- [x] Added basic unit tests for Lambda handlers
+- [x] Covered core business logic for getAll, getById, create, update and delete handlers
+- [x] Improved frontend authentication stability by handling token refresh via Axios interceptors
+- [x] Ensured expired tokens are refreshed transparently before API requests
+
+### Step 7 - Pagination, filtering, and sorting
+
+- [x] Added server side sorting by creation date using DynamoDB sort key
+- [x] Implemented cursor based pagination using DynamoDB LastEvaluatedKey
+- [x] Implemented Prev and Next navigation with client side cursor stack
+- [x] Implemented filtering by createdBy using a dedicated Global Secondary Index

@@ -20,16 +20,6 @@ export class RestApiStack extends Stack {
         const scenariosTable = new dynamodb.Table(this, 'ScenariosTable', {
             tableName: 'scenarios',
             partitionKey: {
-                name: 'id',
-                type: dynamodb.AttributeType.STRING,
-            },
-            billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-            removalPolicy: RemovalPolicy.DESTROY,
-        });
-
-        const scenariosV2Table = new dynamodb.Table(this, 'ScenariosV2Table', {
-            tableName: 'scenarios-v2',
-            partitionKey: {
                 name: 'pk',
                 type: dynamodb.AttributeType.STRING,
             },
@@ -41,7 +31,7 @@ export class RestApiStack extends Stack {
             removalPolicy: RemovalPolicy.DESTROY,
         });
 
-        scenariosV2Table.addGlobalSecondaryIndex({
+        scenariosTable.addGlobalSecondaryIndex({
             indexName: 'id-index',
             partitionKey: {
                 name: 'id',
@@ -50,7 +40,7 @@ export class RestApiStack extends Stack {
             projectionType: dynamodb.ProjectionType.ALL,
         });
 
-        scenariosV2Table.addGlobalSecondaryIndex({
+        scenariosTable.addGlobalSecondaryIndex({
             indexName: 'createdBy-index',
             partitionKey: {
                 name: 'createdBy',
@@ -70,12 +60,10 @@ export class RestApiStack extends Stack {
             handler: 'handler',
             environment: {
                 SCENARIOS_TABLE_NAME: scenariosTable.tableName,
-                SCENARIOS_V2_TABLE_NAME: scenariosV2Table.tableName,
             },
         });
 
         scenariosTable.grantReadWriteData(scenariosLambda);
-        scenariosV2Table.grantReadWriteData(scenariosLambda);
 
         const api = new apigateway.RestApi(this, 'ScenariosApi', {
             restApiName: 'ScenariosApi',

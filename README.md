@@ -194,7 +194,6 @@ To understand who changed data and when and simplify debugging and investigation
 
 - Add batch upload of scenarios via CSV files
 - Upload files to S3
-- Scan uploaded files for malware using an ClamAV antivirus engine
 - Process only clean files asynchronously
 - Persist validated data into DynamoDB
 - Notify users about processing results

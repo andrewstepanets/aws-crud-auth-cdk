@@ -1,5 +1,5 @@
 import { apiService } from './api-service';
-import { CreateScenario, GetScenariosResponse, Scenario, SearchParams, UpdateScenario } from './types';
+import { CreateScenario, GetScenariosResponse, Scenario, ScenarioAudit, SearchParams, UpdateScenario } from './types';
 
 export async function getAllScenarios(params?: SearchParams) {
     const query = new URLSearchParams();
@@ -26,4 +26,8 @@ export async function updateScenario(payload: UpdateScenario) {
 
 export async function deleteScenario(id: string) {
     return apiService.delete<void>(`scenarios/${id}`);
+}
+
+export async function getScenarioAudit(id: string) {
+    return apiService.get<ScenarioAudit>(`scenarios/${id}/audit`);
 }

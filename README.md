@@ -190,7 +190,15 @@ To understand who changed data and when and simplify debugging and investigation
 
 ---
 
-### Step 9 - Secure batch upload with antivirus scanning
+### Step 9 – CI/CD Pipeline
+
+- Set up a deployment flow using AWS CDK Pipelines.
+- Implement a pipeline triggered by GitHub commits to the main branch.
+- Automate infrastructure updates and Lambda deployments using CodePipeline and CodeBuild.
+
+---
+
+### Step 10 - batch upload
 
 - Add batch upload of scenarios via CSV files
 - Upload files to S3

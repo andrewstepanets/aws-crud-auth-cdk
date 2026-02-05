@@ -1,19 +1,20 @@
-import { CfnOutput, Duration, RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
+import { CfnOutput, Duration, RemovalPolicy } from 'aws-cdk-lib';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
 import { Construct } from 'constructs';
+import { BaseStack, BaseStackProps } from '../lib/base-stack';
 
-export class AuthStack extends Stack {
+export class AuthStack extends BaseStack {
     public readonly userPool: cognito.UserPool;
     public readonly userPoolUiClient: cognito.UserPoolClient;
     public readonly userPoolApiClient: cognito.UserPoolClient;
 
-    constructor(scope: Construct, id: string, props?: StackProps) {
+    constructor(scope: Construct, id: string, props: BaseStackProps) {
         super(scope, id, props);
 
         const urls = ['https://dgmpvfufnkjzg.cloudfront.net', 'http://localhost:3000'];
 
         this.userPool = new cognito.UserPool(this, 'ScenariosUserPool', {
-            userPoolName: 'scenarios-user-pool',
+            userPoolName: `scenarios-user-pool-${this.envName}`,
             selfSignUpEnabled: false,
             signInAliases: { email: true },
             passwordPolicy: {

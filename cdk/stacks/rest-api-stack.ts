@@ -1,60 +1,30 @@
-import { CfnOutput, RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
+import { CfnOutput } from 'aws-cdk-lib';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as lambdaEventSources from 'aws-cdk-lib/aws-lambda-event-sources';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Construct } from 'constructs';
 import * as path from 'path';
+import { BaseStack, BaseStackProps } from '../lib/base-stack';
 
-export interface RestApiStackProps extends StackProps {
+export interface RestApiStackProps extends BaseStackProps {
     userPool: cognito.UserPool;
+    scenariosTable: dynamodb.ITable;
+    auditTable: dynamodb.ITable;
 }
 
-export class RestApiStack extends Stack {
+export class RestApiStack extends BaseStack {
+    public readonly api: apigateway.RestApi;
+
     constructor(scope: Construct, id: string, props: RestApiStackProps) {
         super(scope, id, props);
 
-        const { userPool } = props;
+        const { userPool, scenariosTable, auditTable } = props;
 
-        const scenariosTable = new dynamodb.Table(this, 'ScenariosTable', {
-            tableName: 'scenarios',
-            partitionKey: {
-                name: 'pk',
-                type: dynamodb.AttributeType.STRING,
-            },
-            sortKey: {
-                name: 'createdAt',
-                type: dynamodb.AttributeType.STRING,
-            },
-            billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-            removalPolicy: RemovalPolicy.DESTROY,
-        });
-
-        scenariosTable.addGlobalSecondaryIndex({
-            indexName: 'id-index',
-            partitionKey: {
-                name: 'id',
-                type: dynamodb.AttributeType.STRING,
-            },
-            projectionType: dynamodb.ProjectionType.ALL,
-        });
-
-        scenariosTable.addGlobalSecondaryIndex({
-            indexName: 'createdBy-index',
-            partitionKey: {
-                name: 'createdBy',
-                type: dynamodb.AttributeType.STRING,
-            },
-            sortKey: {
-                name: 'createdAt',
-                type: dynamodb.AttributeType.STRING,
-            },
-            projectionType: dynamodb.ProjectionType.ALL,
-        });
-
-        const scenariosLambda = new NodejsFunction(this, 'ScenariosHandler', {
-            functionName: 'scenarios-handler',
+        const scenariosLambda = new NodejsFunction(this, 'Scenarios', {
+            functionName: `Scenarios-${this.envName}`,
             runtime: lambda.Runtime.NODEJS_22_X,
             entry: path.join(__dirname, '../lambdas/scenarios/index.ts'),
             handler: 'handler',
@@ -64,6 +34,37 @@ export class RestApiStack extends Stack {
         });
 
         scenariosTable.grantReadWriteData(scenariosLambda);
+
+        const storeAuditLambda = new NodejsFunction(this, 'StoreAuditLog', {
+            functionName: `Store-audit-log-${this.envName}`,
+            runtime: lambda.Runtime.NODEJS_22_X,
+            entry: path.join(__dirname, '../lambdas/store-audit-log/index.ts'),
+            handler: 'handler',
+            environment: {
+                AUDIT_TABLE_NAME: auditTable.tableName,
+            },
+        });
+
+        storeAuditLambda.addEventSource(
+            new lambdaEventSources.DynamoEventSource(scenariosTable, {
+                startingPosition: lambda.StartingPosition.LATEST,
+                batchSize: 5,
+                retryAttempts: 2,
+            })
+        );
+
+        const getAuditLambda = new NodejsFunction(this, 'GetAuditLog', {
+            functionName: `Get-audit-log-${this.envName}`,
+            runtime: lambda.Runtime.NODEJS_22_X,
+            entry: path.join(__dirname, '../lambdas/get-audit-log/index.ts'),
+            handler: 'handler',
+            environment: {
+                AUDIT_TABLE_NAME: auditTable.tableName,
+            },
+        });
+
+        auditTable.grantWriteData(storeAuditLambda);
+        auditTable.grantReadData(getAuditLambda);
 
         const api = new apigateway.RestApi(this, 'ScenariosApi', {
             restApiName: 'ScenariosApi',
@@ -79,6 +80,9 @@ export class RestApiStack extends Stack {
         });
 
         const scenarios = api.root.addResource('scenarios');
+        const scenarioById = scenarios.addResource('{id}');
+        const audit = scenarioById.addResource('audit');
+
         scenarios.addMethod('GET', new apigateway.LambdaIntegration(scenariosLambda), {
             authorizer,
             authorizationType: apigateway.AuthorizationType.COGNITO,
@@ -88,7 +92,6 @@ export class RestApiStack extends Stack {
             authorizationType: apigateway.AuthorizationType.COGNITO,
         });
 
-        const scenarioById = scenarios.addResource('{id}');
         scenarioById.addMethod('GET', new apigateway.LambdaIntegration(scenariosLambda), {
             authorizer,
             authorizationType: apigateway.AuthorizationType.COGNITO,
@@ -98,6 +101,11 @@ export class RestApiStack extends Stack {
             authorizationType: apigateway.AuthorizationType.COGNITO,
         });
         scenarioById.addMethod('DELETE', new apigateway.LambdaIntegration(scenariosLambda), {
+            authorizer,
+            authorizationType: apigateway.AuthorizationType.COGNITO,
+        });
+
+        audit.addMethod('GET', new apigateway.LambdaIntegration(getAuditLambda), {
             authorizer,
             authorizationType: apigateway.AuthorizationType.COGNITO,
         });

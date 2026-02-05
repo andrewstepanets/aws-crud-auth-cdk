@@ -31,7 +31,7 @@ if (!TABLE_NAME) {
     throw new Error('SCENARIOS_TABLE_NAME is not defined');
 }
 
-const client = new DynamoDBClient({});
+const client = new DynamoDBClient();
 const ddb = DynamoDBDocumentClient.from(client);
 
 export const getAll = async (event: APIGatewayEvent): Promise<APIGatewayProxyResult> => {
@@ -126,6 +126,9 @@ export const create = async (event: APIGatewayEvent): Promise<APIGatewayProxyRes
 
     const body = JSON.parse(event.body);
 
+    const now = new Date().toISOString();
+    const actor = event.requestContext.authorizer?.claims?.email;
+
     const item = {
         id: uuidv4(),
         pk: 'SCENARIO',
@@ -135,8 +138,10 @@ export const create = async (event: APIGatewayEvent): Promise<APIGatewayProxyRes
         steps: Array.isArray(body.steps) ? body.steps : [],
         expectedResult: body.expectedResult ?? '',
         components: Array.isArray(body.components) ? body.components : [],
-        createdBy: event.requestContext.authorizer?.claims?.email,
-        createdAt: new Date().toISOString(),
+        createdBy: actor,
+        createdAt: now,
+        updatedBy: actor,
+        updatedAt: now,
     };
 
     await ddb.send(
@@ -206,6 +211,20 @@ export const update = async (id?: string, event?: APIGatewayEvent): Promise<APIG
             body: JSON.stringify({ message: 'no fields to update' }),
         };
     }
+
+    // audit
+
+    const actor = event.requestContext.authorizer?.claims?.email ?? 'unknown';
+    const now = new Date().toISOString();
+
+    expressionAttributeNames['#updatedBy'] = 'updatedBy';
+    expressionAttributeNames['#updatedAt'] = 'updatedAt';
+
+    expressionAttributeValues[':updatedBy'] = actor;
+    expressionAttributeValues[':updatedAt'] = now;
+
+    updates.push('#updatedBy = :updatedBy');
+    updates.push('#updatedAt = :updatedAt');
 
     const result = await ddb.send(
         new UpdateCommand({

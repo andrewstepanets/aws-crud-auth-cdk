@@ -45,3 +45,16 @@ export interface SearchParams {
     limit?: number;
     createdBy?: string;
 }
+
+export interface AuditEvent {
+    performedBy: string;
+    action: string;
+    ticket: string;
+    scenarioId: string;
+    requestId: string;
+    timestamp: string;
+}
+export interface ScenarioAudit {
+    scenarioId: string;
+    events: AuditEvent[];
+}

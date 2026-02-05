@@ -1,10 +1,18 @@
 import { useMutation, UseMutationOptions, useQuery, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
-import { createScenario, deleteScenario, getAllScenarios, getScenarioById, updateScenario } from './api';
-import { CreateScenario, GetScenariosResponse, Scenario, SearchParams, UpdateScenario } from './types';
+import {
+    createScenario,
+    deleteScenario,
+    getAllScenarios,
+    getScenarioAudit,
+    getScenarioById,
+    updateScenario,
+} from './api';
+import { CreateScenario, GetScenariosResponse, Scenario, ScenarioAudit, SearchParams, UpdateScenario } from './types';
 
 export const scenariosQueryKeys = {
     all: ['scenarios'] as const,
-    oneScenario: (id: string) => ['scenarios', id] as const,
+    scenario: (id: string) => ['scenarios', id] as const,
+    audit: (id: string) => ['scenarios', id, 'audit'] as const,
 };
 
 export function useGetAllScenarios(params?: SearchParams, options?: UseQueryOptions<GetScenariosResponse>) {
@@ -18,7 +26,7 @@ export function useGetAllScenarios(params?: SearchParams, options?: UseQueryOpti
 
 export function useGetScenario(id: string, options?: UseQueryOptions<Scenario>) {
     return useQuery<Scenario>({
-        queryKey: scenariosQueryKeys.oneScenario(id),
+        queryKey: scenariosQueryKeys.scenario(id),
         queryFn: () => getScenarioById(id),
         enabled: !!id,
         ...options,
@@ -70,5 +78,14 @@ export function useDeleteScenario(options?: UseMutationOptions<void, Error, stri
 
             options?.onSuccess?.(...rest);
         },
+    });
+}
+
+export function useGetScenarioAudit(id: string, options?: UseQueryOptions<ScenarioAudit>) {
+    return useQuery<ScenarioAudit>({
+        queryKey: scenariosQueryKeys.audit(id),
+        queryFn: () => getScenarioAudit(id),
+        enabled: !!id,
+        ...options,
     });
 }

@@ -11,10 +11,13 @@ const envProps = { envName: 'dev' };
 const app = new cdk.App();
 const authStack = new AuthStack(app, 'AuthStack', envProps);
 const dataStack = new DataStack(app, 'DataStack', envProps);
-new RestApiStack(app, 'RestApiStack', {
+const restApiStack = new RestApiStack(app, 'RestApiStack', {
     ...envProps,
     userPool: authStack.userPool,
     scenariosTable: dataStack.scenariosTable,
     auditTable: dataStack.auditTable,
 });
-new WebStack(app, 'WebStack', envProps);
+new WebStack(app, 'WebStack', {
+    ...envProps,
+    api: restApiStack.api,
+});

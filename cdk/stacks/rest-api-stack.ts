@@ -66,20 +66,15 @@ export class RestApiStack extends BaseStack {
         auditTable.grantWriteData(storeAuditLambda);
         auditTable.grantReadData(getAuditLambda);
 
-        const api = new apigateway.RestApi(this, 'ScenariosApi', {
+        this.api = new apigateway.RestApi(this, 'ScenariosApi', {
             restApiName: 'ScenariosApi',
-            defaultCorsPreflightOptions: {
-                allowOrigins: ['http://localhost:3000', 'https://dgmpvfufnkjzg.cloudfront.net'],
-                allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-                allowHeaders: ['Content-Type', 'Authorization'],
-            },
         });
 
         const authorizer = new apigateway.CognitoUserPoolsAuthorizer(this, 'ScenariosAuthorizer', {
             cognitoUserPools: [userPool],
         });
 
-        const scenarios = api.root.addResource('scenarios');
+        const scenarios = this.api.root.addResource('scenarios');
         const scenarioById = scenarios.addResource('{id}');
         const audit = scenarioById.addResource('audit');
 
@@ -111,7 +106,7 @@ export class RestApiStack extends BaseStack {
         });
 
         new CfnOutput(this, 'ScenariosApiUrl', {
-            value: api.url,
+            value: this.api.url,
             description: 'Base URL for Scenarios API',
         });
     }

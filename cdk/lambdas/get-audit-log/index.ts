@@ -1,5 +1,6 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, QueryCommand } from '@aws-sdk/lib-dynamodb';
+import { withCors } from '@utils/cors';
 import { APIGatewayEvent, APIGatewayProxyResult } from 'aws-lambda';
 
 const ddbClient = new DynamoDBClient();
@@ -31,31 +32,17 @@ export const handler = async (event: APIGatewayEvent): Promise<APIGatewayProxyRe
     if (events.length === 0) {
         return {
             statusCode: 200,
+            headers: { 'Content-Type': 'application/json', ...withCors(event) },
             body: JSON.stringify(null),
         };
     }
 
     return {
         statusCode: 200,
-        headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event) },
+        headers: { 'Content-Type': 'application/json', ...withCors(event) },
         body: JSON.stringify({
             scenarioId,
             events,
         }),
     };
-};
-
-const ALLOWED_ORIGINS = ['http://localhost:3000', 'https://dgmpvfufnkjzg.cloudfront.net'];
-
-const getCorsHeaders = (event?: APIGatewayEvent): Record<string, string> => {
-    const origin = event?.headers?.origin;
-
-    if (origin && ALLOWED_ORIGINS.includes(origin)) {
-        return {
-            'Access-Control-Allow-Origin': origin,
-            'Access-Control-Allow-Credentials': 'true',
-        };
-    }
-
-    return {};
 };

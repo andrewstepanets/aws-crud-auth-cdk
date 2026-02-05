@@ -7,6 +7,7 @@ import {
     QueryCommand,
     UpdateCommand,
 } from '@aws-sdk/lib-dynamodb';
+import { withCors } from '@utils/cors';
 import { APIGatewayEvent, APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -22,8 +23,6 @@ interface Scenario {
     createdBy: string;
     createdAt: string;
 }
-
-const ALLOWED_ORIGINS = ['http://localhost:3000', 'https://dgmpvfufnkjzg.cloudfront.net'];
 
 const TABLE_NAME = process.env.SCENARIOS_TABLE_NAME;
 
@@ -84,7 +83,7 @@ export const getAll = async (event: APIGatewayEvent): Promise<APIGatewayProxyRes
 
     return {
         statusCode: 200,
-        headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event) },
+        headers: { 'Content-Type': 'application/json', ...withCors(event) },
         body: JSON.stringify(response),
     };
 };
@@ -93,7 +92,7 @@ export const getById = async (id?: string, event?: APIGatewayEvent): Promise<API
     if (!id) {
         return {
             statusCode: 400,
-            headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event) },
+            headers: { 'Content-Type': 'application/json', ...withCors(event) },
             body: JSON.stringify({ message: 'missing id' }),
         };
     }
@@ -103,14 +102,14 @@ export const getById = async (id?: string, event?: APIGatewayEvent): Promise<API
     if (!item) {
         return {
             statusCode: 404,
-            headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event) },
+            headers: { 'Content-Type': 'application/json', ...withCors(event) },
             body: JSON.stringify({ message: 'not found' }),
         };
     }
 
     return {
         statusCode: 200,
-        headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event) },
+        headers: { 'Content-Type': 'application/json', ...withCors(event) },
         body: JSON.stringify(mapScenarioResponse(item)),
     };
 };
@@ -119,7 +118,7 @@ export const create = async (event: APIGatewayEvent): Promise<APIGatewayProxyRes
     if (!event.body) {
         return {
             statusCode: 400,
-            headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event) },
+            headers: { 'Content-Type': 'application/json', ...withCors(event) },
             body: JSON.stringify({ message: 'invalid request body' }),
         };
     }
@@ -153,7 +152,7 @@ export const create = async (event: APIGatewayEvent): Promise<APIGatewayProxyRes
 
     return {
         statusCode: 201,
-        headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event) },
+        headers: { 'Content-Type': 'application/json', ...withCors(event) },
         body: JSON.stringify(mapScenarioResponse(item)),
     };
 };
@@ -162,7 +161,7 @@ export const update = async (id?: string, event?: APIGatewayEvent): Promise<APIG
     if (!id) {
         return {
             statusCode: 400,
-            headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event) },
+            headers: { 'Content-Type': 'application/json', ...withCors(event) },
             body: JSON.stringify({ message: 'missing id' }),
         };
     }
@@ -170,7 +169,7 @@ export const update = async (id?: string, event?: APIGatewayEvent): Promise<APIG
     if (!event?.body) {
         return {
             statusCode: 400,
-            headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event) },
+            headers: { 'Content-Type': 'application/json', ...withCors(event) },
             body: JSON.stringify({ message: 'missing request body' }),
         };
     }
@@ -182,7 +181,7 @@ export const update = async (id?: string, event?: APIGatewayEvent): Promise<APIG
     if (!item) {
         return {
             statusCode: 404,
-            headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event) },
+            headers: { 'Content-Type': 'application/json', ...withCors(event) },
             body: JSON.stringify({ message: 'not found' }),
         };
     }
@@ -207,7 +206,7 @@ export const update = async (id?: string, event?: APIGatewayEvent): Promise<APIG
     if (updates.length === 0) {
         return {
             statusCode: 400,
-            headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event) },
+            headers: { 'Content-Type': 'application/json', ...withCors(event) },
             body: JSON.stringify({ message: 'no fields to update' }),
         };
     }
@@ -242,7 +241,7 @@ export const update = async (id?: string, event?: APIGatewayEvent): Promise<APIG
 
     return {
         statusCode: 200,
-        headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event) },
+        headers: { 'Content-Type': 'application/json', ...withCors(event) },
         body: JSON.stringify(mapScenarioResponse(result.Attributes)),
     };
 };
@@ -251,7 +250,7 @@ export const remove = async (id?: string, event?: APIGatewayEvent): Promise<APIG
     if (!id) {
         return {
             statusCode: 400,
-            headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event) },
+            headers: { 'Content-Type': 'application/json', ...withCors(event) },
             body: JSON.stringify({ message: 'missing id' }),
         };
     }
@@ -261,7 +260,7 @@ export const remove = async (id?: string, event?: APIGatewayEvent): Promise<APIG
     if (!item) {
         return {
             statusCode: 404,
-            headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event) },
+            headers: { 'Content-Type': 'application/json', ...withCors(event) },
             body: JSON.stringify({ message: 'not found' }),
         };
     }
@@ -278,7 +277,7 @@ export const remove = async (id?: string, event?: APIGatewayEvent): Promise<APIG
 
     return {
         statusCode: 204,
-        headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event) },
+        headers: { 'Content-Type': 'application/json', ...withCors(event) },
         body: '',
     };
 };
@@ -318,22 +317,9 @@ export const isEditor = (groups: string[]) => groups.includes('editors');
 
 export const forbidden = (event?: APIGatewayEvent) => ({
     statusCode: 403,
-    headers: { 'Content-Type': 'application/json', ...getCorsHeaders(event) },
+    headers: { 'Content-Type': 'application/json', ...withCors(event) },
     body: JSON.stringify({ message: 'forbidden' }),
 });
-
-const getCorsHeaders = (event?: APIGatewayEvent): Record<string, string> => {
-    const origin = event?.headers?.origin;
-
-    if (origin && ALLOWED_ORIGINS.includes(origin)) {
-        return {
-            'Access-Control-Allow-Origin': origin,
-            'Access-Control-Allow-Credentials': 'true',
-        };
-    }
-
-    return {};
-};
 
 const findScenarioById = async (id: string) => {
     const result = await ddb.send(

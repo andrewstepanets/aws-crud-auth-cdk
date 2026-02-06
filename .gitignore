@@ -1,11 +1,16 @@
 node_modules
-.nvmrc
+cdk/node_modules
 
-# Editor directories and files
+build
+dist
+
+.env*
+
+cdk/cdk.out
+cdk/coverage
+
 .vscode/*
 !.vscode/extensions.json
 
-#production
-build
-
-.env*
+.DS_Store
+.cdk.staging

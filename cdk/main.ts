@@ -1,23 +1,20 @@
 #!/usr/bin/env node
 import * as cdk from 'aws-cdk-lib';
 import 'source-map-support/register';
-import { AuthStack } from './stacks/auth-stack';
-import { DataStack } from './stacks/data-stack';
-import { RestApiStack } from './stacks/rest-api-stack';
-import { WebStack } from './stacks/web-stack';
-
-const envProps = { envName: 'dev' };
+import { PipelineStack } from './stacks/pipeline-stack';
 
 const app = new cdk.App();
-const authStack = new AuthStack(app, 'AuthStack', envProps);
-const dataStack = new DataStack(app, 'DataStack', envProps);
-const restApiStack = new RestApiStack(app, 'RestApiStack', {
-    ...envProps,
-    userPool: authStack.userPool,
-    scenariosTable: dataStack.scenariosTable,
-    auditTable: dataStack.auditTable,
-});
-new WebStack(app, 'WebStack', {
-    ...envProps,
-    api: restApiStack.api,
+
+const connectionArn = app.node.tryGetContext('connectionArn') || process.env.CONNECTION_ARN;
+
+if (!connectionArn) {
+    throw new Error('Missing connectionArn. Provide via cdk.json context or CONNECTION_ARN env var');
+}
+
+new PipelineStack(app, 'PipelineStack', {
+    connectionArn,
+    env: {
+        account: process.env.CDK_DEFAULT_ACCOUNT,
+        region: process.env.CDK_DEFAULT_REGION,
+    },
 });

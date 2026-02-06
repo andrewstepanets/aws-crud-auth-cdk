@@ -1,85 +1,86 @@
 #!/bin/bash
 set -e
 
-# Usage: ./generate-vite-env-from-cfn.sh dev|prod
 STAGE=${1:-dev}
 
-echo "Generating Vite env for stage: $STAGE"
+echo "Generating Vite env for stage $STAGE"
 
-# Dev -> Dev, prod -> Prod
+# Приводим dev -> Dev, prod -> Prod
 STAGE_PREFIX=$(echo "$STAGE" | awk '{print toupper(substr($0,1,1)) tolower(substr($0,2))}')
 
-AUTH_STACK_PART="${STAGE_PREFIX}-AuthStack"
-WEB_STACK_PART="${STAGE_PREFIX}-WebStack"
+echo "Stage prefix $STAGE_PREFIX"
 
-echo "Looking for stacks containing:"
-echo "  AuthStack: $AUTH_STACK_PART"
-echo "  WebStack : $WEB_STACK_PART"
+echo "Listing CloudFormation stacks"
+aws cloudformation list-stacks \
+  --stack-status-filter CREATE_COMPLETE UPDATE_COMPLETE \
+  --query "StackSummaries[].StackName" \
+  --output table
 
-# Find real stack names (with hashes)
-AUTH_STACK=$(aws cloudformation list-stacks \
-  --stack-status-filter CREATE_COMPLETE UPDATE_COMPLETE UPDATE_ROLLBACK_COMPLETE \
-  --query "StackSummaries[?contains(StackName, '${AUTH_STACK_PART}')].StackName | [0]" \
-  --output text)
+echo "Resolving stack names dynamically"
 
-WEB_STACK=$(aws cloudformation list-stacks \
-  --stack-status-filter CREATE_COMPLETE UPDATE_COMPLETE UPDATE_ROLLBACK_COMPLETE \
-  --query "StackSummaries[?contains(StackName, '${WEB_STACK_PART}')].StackName | [0]" \
-  --output text)
+AUTH_STACK_NAME=$(aws cloudformation list-stacks \
+  --stack-status-filter CREATE_COMPLETE UPDATE_COMPLETE \
+  --query "StackSummaries[].StackName" \
+  --output text | tr '\t' '\n' | grep "^PipelineStack-${STAGE_PREFIX}-AuthStack" | head -n 1)
 
-if [ -z "$AUTH_STACK" ] || [ "$AUTH_STACK" = "None" ]; then
-  echo "ERROR: Auth stack not found"
-  aws cloudformation list-stacks \
-    --stack-status-filter CREATE_COMPLETE UPDATE_COMPLETE UPDATE_ROLLBACK_COMPLETE \
-    --query "StackSummaries[].StackName"
+WEB_STACK_NAME=$(aws cloudformation list-stacks \
+  --stack-status-filter CREATE_COMPLETE UPDATE_COMPLETE \
+  --query "StackSummaries[].StackName" \
+  --output text | tr '\t' '\n' | grep "^PipelineStack-${STAGE_PREFIX}-WebStack" | head -n 1)
+
+if [ -z "$AUTH_STACK_NAME" ]; then
+  echo "ERROR AuthStack not found"
   exit 1
 fi
 
-if [ -z "$WEB_STACK" ] || [ "$WEB_STACK" = "None" ]; then
-  echo "ERROR: Web stack not found"
-  aws cloudformation list-stacks \
-    --stack-status-filter CREATE_COMPLETE UPDATE_COMPLETE UPDATE_ROLLBACK_COMPLETE \
-    --query "StackSummaries[].StackName"
+if [ -z "$WEB_STACK_NAME" ]; then
+  echo "ERROR WebStack not found"
   exit 1
 fi
 
-echo "Found Auth stack: $AUTH_STACK"
-echo "Found Web  stack: $WEB_STACK"
+echo "Resolved stacks"
+echo "AuthStack $AUTH_STACK_NAME"
+echo "WebStack  $WEB_STACK_NAME"
 
-# Read outputs
+echo "Reading CloudFormation outputs"
+
 COGNITO_DOMAIN=$(aws cloudformation describe-stacks \
-  --stack-name "$AUTH_STACK" \
-  --query "Stacks[0].Outputs[?OutputKey=='CognitoDomain'].OutputValue" \
-  --output text)
+  --stack-name "$AUTH_STACK_NAME" \
+  --query "Stacks[0].Outputs[?OutputKey=='CognitoAuthorizeUrl'].OutputValue" \
+  --output text | sed 's|https://||' | sed 's|/oauth2/authorize.*||')
 
 COGNITO_CLIENT_ID=$(aws cloudformation describe-stacks \
-  --stack-name "$AUTH_STACK" \
-  --query "Stacks[0].Outputs[?OutputKey=='CognitoClientId'].OutputValue" \
+  --stack-name "$AUTH_STACK_NAME" \
+  --query "Stacks[0].Outputs[?OutputKey=='UserPoolClientId'].OutputValue" \
+  --output text)
+
+API_URL=$(aws cloudformation describe-stacks \
+  --stack-name "$WEB_STACK_NAME" \
+  --query "Stacks[0].Outputs[?OutputKey=='ApiUrl'].OutputValue" \
   --output text)
 
 if [ -z "$COGNITO_DOMAIN" ] || [ "$COGNITO_DOMAIN" = "None" ]; then
-  echo "ERROR: CognitoDomain output not found in $AUTH_STACK"
+  echo "ERROR Cognito domain not found in outputs"
   exit 1
 fi
 
 if [ -z "$COGNITO_CLIENT_ID" ] || [ "$COGNITO_CLIENT_ID" = "None" ]; then
-  echo "ERROR: CognitoClientId output not found in $AUTH_STACK"
+  echo "ERROR Cognito client id not found in outputs"
   exit 1
 fi
 
-# API URL
-if [ "$STAGE" = "prod" ]; then
-  API_URL="/api"
-else
-  API_URL="/api"
+if [ -z "$API_URL" ] || [ "$API_URL" = "None" ]; then
+  echo "ERROR ApiUrl not found in outputs"
+  exit 1
 fi
 
-# Write Vite env
+echo "Generating .env.production"
+
 cat > .env.production << EOF
 VITE_COGNITO_DOMAIN=$COGNITO_DOMAIN
 VITE_COGNITO_CLIENT_ID=$COGNITO_CLIENT_ID
 VITE_API_URL=$API_URL
 EOF
 
-echo "Generated .env.production:"
+echo "Generated .env.production"
 cat .env.production

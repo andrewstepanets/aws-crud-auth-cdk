@@ -1,5 +1,6 @@
 import { Stack, StackProps } from 'aws-cdk-lib';
 import * as codebuild from 'aws-cdk-lib/aws-codebuild';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import * as pipelines from 'aws-cdk-lib/pipelines';
 import { Construct } from 'constructs';
 import { AppStage } from '../app-stage';
@@ -72,6 +73,12 @@ export class PipelineStack extends Stack {
                         'test -f build/index.html || (echo "index.html missing!" && exit 1)',
                         'echo "Frontend build successful"',
                     ],
+                    rolePolicyStatements: [
+                        new iam.PolicyStatement({
+                            actions: ['cloudformation:DescribeStacks', 'cloudformation:ListStacks'],
+                            resources: ['*'],
+                        }),
+                    ],
                 }),
             ],
         });
@@ -102,6 +109,12 @@ export class PipelineStack extends Stack {
                         'test -d build || (echo "Build folder missing!" && exit 1)',
                         'test -f build/index.html || (echo "index.html missing!" && exit 1)',
                         'echo "Frontend build successful"',
+                    ],
+                    rolePolicyStatements: [
+                        new iam.PolicyStatement({
+                            actions: ['cloudformation:DescribeStacks', 'cloudformation:ListStacks'],
+                            resources: ['*'],
+                        }),
                     ],
                 }),
             ],

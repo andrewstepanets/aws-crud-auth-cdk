@@ -93,6 +93,7 @@ export class WebStack extends Stack {
 
         new CfnOutput(this, 'WebsiteBucketName', {
             value: websiteBucket.bucketName,
+            description: 'Name of the S3 bucket for website',
         });
 
         new CfnOutput(this, 'WebsiteUrl', {

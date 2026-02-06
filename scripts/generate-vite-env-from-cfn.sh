@@ -2,81 +2,40 @@
 set -e
 
 STAGE=${1:-dev}
+# Делаем первую букву заглавной (dev -> Dev)
+STAGE_CAP=$(echo "$STAGE" | awk '{print toupper(substr($0,1,1))substr($0,2)}')
 
-echo "Generating Vite env for stage $STAGE"
+echo "===== START generate vite env ====="
+echo "Stage: $STAGE (Prefix: $STAGE_CAP)"
 
-STAGE_PREFIX=$(echo "$STAGE" | awk '{print toupper(substr($0,1,1)) tolower(substr($0,2))}')
+# Твои стеки называются так:
+AUTH_STACK_NAME="${STAGE_CAP}-AuthStack"
+WEB_STACK_NAME="${STAGE_CAP}-WebStack"
 
-echo "Stage prefix $STAGE_PREFIX"
+echo "Target Stacks: $AUTH_STACK_NAME, $WEB_STACK_NAME"
 
-echo "Listing CloudFormation stacks"
-aws cloudformation list-stacks \
-  --stack-status-filter CREATE_COMPLETE UPDATE_COMPLETE \
-  --query "StackSummaries[].StackName" \
-  --output text | tr '\t' '\n'
+# Функция для вытягивания OutputValue по OutputKey
+get_val() {
+  aws cloudformation describe-stacks \
+    --stack-name "$1" \
+    --query "Stacks[0].Outputs[?OutputKey=='$2'].OutputValue" \
+    --output text
+}
 
-echo "Resolving stack names dynamically"
+echo "Fetching values from CloudFormation..."
 
-AUTH_STACK_NAME=$(aws cloudformation list-stacks \
-  --stack-status-filter CREATE_COMPLETE UPDATE_COMPLETE \
-  --query "StackSummaries[].StackName" \
-  --output text | tr '\t' '\n' | grep "^${STAGE_PREFIX}-AuthStack" | head -n 1)
+# Берем значения по тем ключам, которые у тебя реально прописаны в CDK коде
+COGNITO_DOMAIN=$(get_val "$AUTH_STACK_NAME" "CognitoDomain")
+COGNITO_CLIENT_ID=$(get_val "$AUTH_STACK_NAME" "CognitoClientId")
+API_URL=$(get_val "$WEB_STACK_NAME" "ApiUrl")
 
-WEB_STACK_NAME=$(aws cloudformation list-stacks \
-  --stack-status-filter CREATE_COMPLETE UPDATE_COMPLETE \
-  --query "StackSummaries[].StackName" \
-  --output text | tr '\t' '\n' | grep "^${STAGE_PREFIX}-WebStack" | head -n 1)
-
-echo "Resolved names"
-echo "AUTH_STACK_NAME=${AUTH_STACK_NAME}"
-echo "WEB_STACK_NAME=${WEB_STACK_NAME}"
-
-if [ -z "$AUTH_STACK_NAME" ]; then
-  echo "ERROR AuthStack not found"
+# Проверка на ошибки
+if [ -z "$COGNITO_DOMAIN" ] || [ "$COGNITO_DOMAIN" == "None" ]; then
+  echo "ERROR: Could not find CognitoDomain in stack $AUTH_STACK_NAME"
   exit 1
 fi
 
-if [ -z "$WEB_STACK_NAME" ]; then
-  echo "ERROR WebStack not found"
-  exit 1
-fi
-
-echo "Reading CloudFormation outputs"
-
-COGNITO_DOMAIN=$(aws cloudformation describe-stacks \
-  --stack-name "$AUTH_STACK_NAME" \
-  --query "Stacks[0].Outputs[?OutputKey=='CognitoAuthorizeUrl'].OutputValue" \
-  --output text | sed 's|https://||' | sed 's|/oauth2/authorize.*||')
-
-COGNITO_CLIENT_ID=$(aws cloudformation describe-stacks \
-  --stack-name "$AUTH_STACK_NAME" \
-  --query "Stacks[0].Outputs[?OutputKey=='UserPoolClientId'].OutputValue" \
-  --output text)
-
-API_URL=$(aws cloudformation describe-stacks \
-  --stack-name "$WEB_STACK_NAME" \
-  --query "Stacks[0].Outputs[?OutputKey=='ApiUrl'].OutputValue" \
-  --output text)
-
-echo "Resolved values"
-echo "COGNITO_DOMAIN=${COGNITO_DOMAIN}"
-echo "COGNITO_CLIENT_ID=${COGNITO_CLIENT_ID}"
-echo "API_URL=${API_URL}"
-
-if [ -z "$COGNITO_DOMAIN" ] || [ "$COGNITO_DOMAIN" = "None" ]; then
-  echo "ERROR Cognito domain not found in outputs"
-  exit 1
-fi
-
-if [ -z "$COGNITO_CLIENT_ID" ] || [ "$COGNITO_CLIENT_ID" = "None" ]; then
-  echo "ERROR Cognito client id not found in outputs"
-  exit 1
-fi
-
-if [ -z "$API_URL" ] || [ "$API_URL" = "None" ]; then
-  echo "ERROR ApiUrl not found in outputs"
-  exit 1
-fi
+echo "Creating .env.production..."
 
 cat > .env.production << EOF
 VITE_COGNITO_DOMAIN=$COGNITO_DOMAIN
@@ -84,5 +43,7 @@ VITE_COGNITO_CLIENT_ID=$COGNITO_CLIENT_ID
 VITE_API_URL=$API_URL
 EOF
 
-echo "Generated .env.production"
+echo "--- .env.production content ---"
 cat .env.production
+echo "-------------------------------"
+echo "===== END generate vite env ====="

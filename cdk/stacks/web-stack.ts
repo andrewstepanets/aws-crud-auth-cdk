@@ -91,6 +91,10 @@ export class WebStack extends Stack {
             distributionPaths: ['/*'],
         });
 
+        new CfnOutput(this, 'WebsiteBucketName', {
+            value: websiteBucket.bucketName,
+        });
+
         new CfnOutput(this, 'WebsiteUrl', {
             value: `https://${this.distribution.distributionDomainName}`,
             description: 'CloudFront distribution URL',

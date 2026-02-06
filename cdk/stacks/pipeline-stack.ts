@@ -67,11 +67,11 @@ export class PipelineStack extends Stack {
                         'corepack enable',
                         'yarn install',
                         'yarn build --mode prod',
-                        'echo "Verifying build output"',
-                        'ls -la build/',
-                        'test -d build || (echo "Build folder missing!" && exit 1)',
-                        'test -f build/index.html || (echo "index.html missing!" && exit 1)',
-                        'echo "Frontend build successful"',
+                        'echo "Syncing build to S3"',
+                        'BUCKET_NAME=$(aws cloudformation describe-stacks --stack-name Dev-WebStack --query "Stacks[0].Outputs[?OutputKey==\`WebsiteBucketName\`].OutputValue" --output text)',
+                        'aws s3 sync build/ s3://$BUCKET_NAME --delete',
+                        'DIST_ID=$(aws cloudformation describe-stacks --stack-name Dev-WebStack --query "Stacks[0].Outputs[?OutputKey==\`DistributionId\`].OutputValue" --output text)',
+                        'aws cloudfront create-invalidation --distribution-id $DIST_ID --paths "/*"',
                     ],
                     rolePolicyStatements: [
                         new iam.PolicyStatement({

@@ -14,6 +14,7 @@ export class PipelineStack extends Stack {
 
         const source = pipelines.CodePipelineSource.connection('andrewstepanets/aws-crud-auth-cdk', 'main', {
             connectionArn: props.connectionArn,
+            triggerOnPush: true,
         });
 
         const pipeline = new pipelines.CodePipeline(this, 'CicdPipeline', {
@@ -22,6 +23,11 @@ export class PipelineStack extends Stack {
 
                 buildEnvironment: {
                     buildImage: codebuild.LinuxBuildImage.STANDARD_7_0,
+                    environmentVariables: {
+                        CONNECTION_ARN: {
+                            value: props.connectionArn,
+                        },
+                    },
                 },
 
                 installCommands: ['n 20', 'node -v'],

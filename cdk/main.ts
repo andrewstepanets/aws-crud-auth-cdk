@@ -7,10 +7,6 @@ const app = new cdk.App();
 
 const connectionArn = app.node.tryGetContext('connectionArn') || process.env.CONNECTION_ARN;
 
-if (!connectionArn) {
-    throw new Error('Missing connectionArn. Provide via cdk.json context or CONNECTION_ARN env var');
-}
-
 new PipelineStack(app, 'PipelineStack', {
     connectionArn,
     env: {

@@ -1,4 +1,4 @@
-import * as Accordion from '@radix-ui/react-accordion';
+import { Badge, Box, Button, Flex, Heading, Tabs, Text } from '@radix-ui/themes';
 import { useNavigate, useParams } from 'react-router';
 import { useGetScenario, useGetScenarioAudit } from '../api/hooks';
 import { useAuth } from '../auth/auth-context';
@@ -24,89 +24,132 @@ export default function ScenarioView() {
     }
 
     if (isError || !data || !auditData || isAudtitError) {
-        return <div>Scenario not found</div>;
+        return <Text>Scenario not found</Text>;
     }
 
     return (
-        <div className="view">
-            <h2>View scenario</h2>
+        <Box className="view" width="50%">
+            <Heading size="5" mb="4">
+                View scenario for ticket {data.ticket}
+            </Heading>
+            <Tabs.Root defaultValue="details">
+                <Tabs.List size="2">
+                    <Tabs.Trigger value="details">Details</Tabs.Trigger>
+                    <Tabs.Trigger value="audit">Audit trail</Tabs.Trigger>
+                </Tabs.List>
 
-            <section className="view-section">
-                <h3>Ticket</h3>
-                <p>{data.ticket}</p>
-            </section>
+                <Box pt="3">
+                    <Tabs.Content value="details">
+                        <Box asChild>
+                            <section className="view-section">
+                                <Heading size="3" mb="2">
+                                    Title
+                                </Heading>
+                                <Text as="p" color="gray">
+                                    {data.title}
+                                </Text>
+                            </section>
+                        </Box>
 
-            <section className="view-section">
-                <h3>Title</h3>
-                <p>{data.title}</p>
-            </section>
+                        <Box asChild>
+                            <section className="view-section">
+                                <Heading size="3" mb="2">
+                                    Description
+                                </Heading>
+                                <Text as="p" color="gray">
+                                    {data.description}
+                                </Text>
+                            </section>
+                        </Box>
 
-            <section className="view-section">
-                <h3>Description</h3>
-                <p>{data.description}</p>
-            </section>
+                        <Box asChild>
+                            <section className="view-section">
+                                <Heading size="3" mb="2">
+                                    Steps
+                                </Heading>
+                                <Box asChild>
+                                    <Tabs.Root defaultValue="Step1">
+                                        <Tabs.List>
+                                            {data.steps.map((step, index) => (
+                                                <Tabs.Trigger key={`${step}-${index}`} value={`Step${index + 1}`}>
+                                                    Step {index + 1}
+                                                </Tabs.Trigger>
+                                            ))}
+                                        </Tabs.List>
+                                        <Box pt="3">
+                                            {data.steps.map((step, index) => (
+                                                <Tabs.Content key={`${step}-${index}`} value={`Step${index + 1}`}>
+                                                    <Text size="2" color="gray">
+                                                        {step}
+                                                    </Text>
+                                                </Tabs.Content>
+                                            ))}
+                                        </Box>
+                                    </Tabs.Root>
+                                </Box>
+                            </section>
+                        </Box>
 
-            <section className="view-section">
-                <h3>Steps</h3>
-                <ul>
-                    {data.steps.map((step, index) => (
-                        <li key={index}>{step}</li>
-                    ))}
-                </ul>
-            </section>
+                        <Box asChild>
+                            <section className="view-section">
+                                <Heading size="3" mb="2">
+                                    Expected result
+                                </Heading>
+                                <Text as="p" color="gray">
+                                    {data.expectedResult}
+                                </Text>
+                            </section>
+                        </Box>
 
-            <section className="view-section">
-                <h3>Expected result</h3>
-                <p>{data.expectedResult}</p>
-            </section>
+                        <Box asChild>
+                            <section className="view-section">
+                                <Heading size="3" mb="2">
+                                    Components
+                                </Heading>
+                                <Flex gap="2" className="components-list">
+                                    {data.components.map(component => (
+                                        <Badge key={component} className="component-badge">
+                                            {component}
+                                        </Badge>
+                                    ))}
+                                </Flex>
+                            </section>
+                        </Box>
+                    </Tabs.Content>
 
-            <section className="view-section">
-                <h3>Components</h3>
-                <div className="components-list">
-                    {data.components.map(component => (
-                        <span key={component} className="component-badge">
-                            {component}
-                        </span>
-                    ))}
-                </div>
-            </section>
+                    <Tabs.Content value="audit">
+                        <Box>
+                            {auditData.events.map(event => (
+                                <Box key={event.requestId} mb="4">
+                                    <Flex align="center" gap="2">
+                                        <Badge color={event.action === 'CREATE' ? 'green' : 'blue'}>
+                                            {event.action}
+                                        </Badge>
+                                        <Text size="2" weight="medium">
+                                            by {event.performedBy}
+                                        </Text>
+                                    </Flex>
 
-            <section className="view-section">
-                <h3>Audit history</h3>
+                                    <Text size="1" color="gray">
+                                        {new Date(event.timestamp).toLocaleString()}
+                                    </Text>
+                                </Box>
+                            ))}
+                        </Box>
+                    </Tabs.Content>
+                </Box>
+            </Tabs.Root>
 
-                <Accordion.Root type="single" collapsible>
-                    <Accordion.Item value="audit">
-                        <Accordion.Header>
-                            <Accordion.Trigger>View history</Accordion.Trigger>
-                        </Accordion.Header>
-
-                        <Accordion.Content>
-                            <ul className="audit-list">
-                                {auditData.events.map(event => (
-                                    <li key={event.requestId} className="audit-item">
-                                        <div>
-                                            <strong>{event.action}</strong>
-                                            {' by '}
-                                            {event.performedBy}
-                                        </div>
-                                        <div>Ticket {event.ticket}</div>
-                                        <div>{new Date(event.timestamp).toLocaleString()}</div>
-                                    </li>
-                                ))}
-                            </ul>
-                        </Accordion.Content>
-                    </Accordion.Item>
-                </Accordion.Root>
-            </section>
-
-            <div style={{ display: 'flex', gap: '8px', marginTop: '24px' }}>
+            <Flex gap="3" mt="6">
                 {isEditor && (
-                    <button className="primary-button" onClick={redirectToEdit}>
+                    <Button className="primary-button" onClick={redirectToEdit}>
                         Edit
-                    </button>
+                    </Button>
                 )}
-                <button onClick={redirectToMainPage}>Cancel</button>
-            </div>
-        </div>
+                <Button onClick={redirectToMainPage} variant="soft">
+                    Cancel
+                </Button>
+            </Flex>
+        </Box>
     );
 }

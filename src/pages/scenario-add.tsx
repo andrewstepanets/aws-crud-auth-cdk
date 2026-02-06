@@ -1,3 +1,4 @@
+import { Box, Heading } from '@radix-ui/themes';
 import { useNavigate } from 'react-router';
 import { useCreateScenario } from '../api/hooks';
 import { AddEditForm } from '../components/add-edit-form.tsx/add-edit-form';
@@ -29,9 +30,11 @@ export default function ScenarioAdd() {
     };
 
     return (
-        <div className="add">
-            <h2>Add scenario</h2>
+        <Box className="add">
+            <Heading size="5" mb="4">
+                Add scenario
+            </Heading>
             <AddEditForm defaultValues={defaultValues} submit={onSubmit} isPending={isPending} />
-        </div>
+        </Box>
     );
 }

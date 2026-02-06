@@ -1,3 +1,4 @@
+import { Box, Heading, Text } from '@radix-ui/themes';
 import { useNavigate, useParams } from 'react-router';
 import { useGetScenario, useUpdateScenario } from '../api/hooks';
 import { AddEditForm } from '../components/add-edit-form.tsx/add-edit-form';
@@ -26,7 +27,7 @@ export default function ScenarioEdit() {
     }
 
     if (isError || !data) {
-        return <div>Scenario not found</div>;
+        return <Text>Scenario not found</Text>;
     }
 
     const onSubmit = (data: ScenarioFormValues) => {
@@ -42,9 +43,11 @@ export default function ScenarioEdit() {
     };
 
     return (
-        <div className="edit">
-            <h2>Edit scenario</h2>
+        <Box className="edit">
+            <Heading size="5" mb="4">
+                Edit scenario
+            </Heading>
             <AddEditForm defaultValues={defaultValues} submit={onSubmit} isPending={isPending} isEdit />
-        </div>
+        </Box>
     );
 }

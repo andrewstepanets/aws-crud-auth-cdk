@@ -1,6 +1,7 @@
+import { Box, Button, DropdownMenu, Flex, Table, Text } from '@radix-ui/themes';
 import { ColumnDef, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router';
+import { useNavigate } from 'react-router';
 import { useDeleteScenario, useGetAllScenarios } from '../api/hooks';
 import { SearchParams } from '../api/types';
 import { Loader } from './loader';
@@ -66,7 +67,8 @@ export function ScenariosTable({ isEditor, params }: ScenarioTableProps) {
             header: 'Description',
             accessorKey: 'description',
             cell: info => (
-                <div
+                <Text
+                    as="div"
                     style={{
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
@@ -75,7 +77,7 @@ export function ScenariosTable({ isEditor, params }: ScenarioTableProps) {
                     title={info.getValue<string>()}
                 >
                     {info.getValue<string>()}
-                </div>
+                </Text>
             ),
         },
         {
@@ -85,7 +87,7 @@ export function ScenariosTable({ isEditor, params }: ScenarioTableProps) {
         {
             header: 'Date created',
             cell: ({ row }) => (
-                <div style={{ width: '140px' }}>{new Date(row.original.createdAt).toLocaleDateString()}</div>
+                <Box style={{ width: '140px' }}>{new Date(row.original.createdAt).toLocaleDateString()}</Box>
             ),
         },
         {
@@ -111,39 +113,41 @@ export function ScenariosTable({ isEditor, params }: ScenarioTableProps) {
     return isFetching ? (
         <Loader />
     ) : (
-        <div>
-            <table className="scenarios-table">
-                <thead>
+        <Box>
+            <Table.Root className="scenarios-table" style={{ tableLayout: 'fixed', width: '100%' }}>
+                <Table.Header>
                     {table.getHeaderGroups().map(headerGroup => (
-                        <tr key={headerGroup.id}>
+                        <Table.Row key={headerGroup.id}>
                             {headerGroup.headers.map(header => (
-                                <th key={header.id} className={`col-${header.id}`}>
+                                <Table.ColumnHeaderCell key={header.id} className={`col-${header.id}`}>
                                     {flexRender(header.column.columnDef.header, header.getContext())}
-                                </th>
+                                </Table.ColumnHeaderCell>
                             ))}
-                        </tr>
+                        </Table.Row>
                     ))}
-                </thead>
-                <tbody>
+                </Table.Header>
+                <Table.Body>
                     {table.getRowModel().rows.map(row => (
-                        <tr key={row.id}>
+                        <Table.Row key={row.id}>
                             {row.getVisibleCells().map(cell => (
-                                <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                                <Table.Cell key={cell.id}>
+                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                </Table.Cell>
                             ))}
-                        </tr>
+                        </Table.Row>
                     ))}
-                </tbody>
-            </table>
-            <div className="pagination">
-                <button
+                </Table.Body>
+            </Table.Root>
+            <Flex gap="2" className="pagination">
+                <Button
                     disabled={pageIndex === 0 || isFetching}
                     onClick={() => {
                         setPageIndex(prev => prev - 1);
                     }}
                 >
                     Prev
-                </button>
-                <button
+                </Button>
+                <Button
                     disabled={!data?.nextKey || isFetching}
                     onClick={() => {
                         setKeysStack(prev => {
@@ -161,35 +165,35 @@ export function ScenariosTable({ isEditor, params }: ScenarioTableProps) {
                     }}
                 >
                     Next
-                </button>
-            </div>
-        </div>
+                </Button>
+            </Flex>
+        </Box>
     );
 }
 
 function ActionsMenu({ isEditor, id, onDelete, isDeleting }: ActionsMenuProps) {
+    const navigate = useNavigate();
+
     return (
-        <div className="actions-wrapper">
-            <button className="actions-button" disabled={isDeleting}>
-                {isDeleting ? 'Deleting…' : 'Action'}
-            </button>
-
-            <div className="actions-dropdown">
-                <Link className="actions-item" to={{ pathname: `${id}/view` }}>
-                    View
-                </Link>
-
+        <DropdownMenu.Root>
+            <DropdownMenu.Trigger>
+                <Button variant="outline" color="gray">
+                    {isDeleting ? 'Deleting…' : 'Action'}
+                    <DropdownMenu.TriggerIcon />
+                </Button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Content>
+                <DropdownMenu.Item onClick={() => navigate(`${id}/view`)}>View</DropdownMenu.Item>
                 {isEditor && (
                     <>
-                        <Link className="actions-item" to={{ pathname: `${id}/edit` }}>
-                            Edit
-                        </Link>
-                        <button className="actions-item danger" onClick={() => onDelete(id)}>
+                        <DropdownMenu.Item onClick={() => navigate(`${id}/edit`)}>Edit</DropdownMenu.Item>
+                        <DropdownMenu.Separator />
+                        <DropdownMenu.Item color="red" onClick={() => onDelete(id)}>
                             Delete
-                        </button>
+                        </DropdownMenu.Item>
                     </>
                 )}
-            </div>
-        </div>
+            </DropdownMenu.Content>
+        </DropdownMenu.Root>
     );
 }

@@ -22,7 +22,7 @@ h1 {
 
 /* Buttons */
 
-button {
+/* button {
     border-radius: 4px;
     border: 1px solid rgba(0, 0, 0, 0.5);
     padding: 10px 16px;
@@ -41,7 +41,7 @@ button:focus,
 button:focus-visible {
     outline: none;
     box-shadow: 0 0 0 2px rgba(100, 108, 255, 0.4);
-}
+} */
 
 /* Primary action */
 
@@ -81,7 +81,7 @@ button:focus-visible {
 
 /* Scenarios table */
 
-.scenarios-table {
+.scenarios-table table {
     width: 95%;
     border-collapse: collapse;
     table-layout: fixed;
@@ -168,7 +168,7 @@ button:focus-visible {
     z-index: 20;
 }
 
-.actions-item {
+/* .actions-item {
     display: block;
     padding: 8px 12px;
     font-size: 14px;
@@ -176,13 +176,22 @@ button:focus-visible {
     white-space: nowrap;
 }
 
-a.actions-item {
+*/
+/* a.actions-item {
     color: #494949;
     text-decoration: none;
+    cursor: default;
 }
-button.actions-item {
-    border: none;
-    border-radius: 0;
+a.actions-item:visited {
+    color: inherit;
+    display: flex;
+    width: 100%;
+    height: 100%;
+} */
+/*
+    button.actions-item {
+        border: none;
+        border-radius: 0;
     width: 100%;
     display: flex;
     background-color: #fff;
@@ -194,7 +203,7 @@ button.actions-item {
 
 .actions-item.danger {
     color: #b91c1c;
-}
+} */
 
 /*  Loader */
 
@@ -264,9 +273,9 @@ button.actions-item {
 
 /* View */
 
-.view {
+/* .view {
     width: 30%;
-}
+} */
 
 .view-section {
     margin-bottom: 20px;
@@ -289,12 +298,12 @@ button.actions-item {
     background: #e6f5ff;
 }
 
-.primary-button:disabled,
+/* .primary-button:disabled,
 .actions-button:disabled,
 button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
-}
+} */
 
 .pagination {
     display: flex;

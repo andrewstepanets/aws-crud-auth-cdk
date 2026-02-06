@@ -1,3 +1,4 @@
+import { Box, Button, Flex } from '@radix-ui/themes';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { SearchParams } from '../api/types';
@@ -13,9 +14,9 @@ export default function MainPage() {
     const [params, setSearchParams] = useState<SearchParams>({ createdBy: undefined });
 
     return (
-        <>
-            <div style={{ height: '24px' }} />
-            <div>
+        <Flex direction="column" gap="4">
+            <Box style={{ height: '24px' }} />
+            <Box>
                 <ScenarioSearchForm
                     onSearch={params =>
                         setSearchParams({
@@ -23,19 +24,17 @@ export default function MainPage() {
                         })
                     }
                 />
-            </div>
-            <div>
+            </Box>
+            <Box>
                 {isEditor && (
-                    <>
-                        <button className="primary-button" onClick={() => navigate('/add')}>
-                            + Add Scenario
-                        </button>
-                    </>
+                    <Button className="primary-button" onClick={() => navigate('/add')}>
+                        + Add Scenario
+                    </Button>
                 )}
-            </div>
-            <div>
+            </Box>
+            <Box>
                 <ScenariosTable isEditor={isEditor} params={params} />
-            </div>
-        </>
+            </Box>
+        </Flex>
     );
 }

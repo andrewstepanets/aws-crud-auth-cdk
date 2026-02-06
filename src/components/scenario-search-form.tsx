@@ -1,3 +1,4 @@
+import { Box, Button, Flex, Text, TextField } from '@radix-ui/themes';
 import { useForm } from 'react-hook-form';
 import { SearchParams } from './types';
 
@@ -17,17 +18,21 @@ export function ScenarioSearchForm({ onSearch }: SearchFormProps) {
     };
 
     return (
-        <form onSubmit={handleSubmit(onSearch)} className="scenario-search-form">
-            <div style={{ display: 'flex', gap: '8px' }}>
-                <div className="form-group">
-                    <label htmlFor="title">Created by</label>
-                    <input id="title" {...register('createdBy')} />
-                </div>
-                <button type="submit">Search</button>
-                <button type="button" onClick={handleClear}>
-                    Clear
-                </button>
-            </div>
-        </form>
+        <Box asChild>
+            <form onSubmit={handleSubmit(onSearch)} className="scenario-search-form">
+                <Flex gap="3">
+                    <Box className="form-group">
+                        <Text as="label" htmlFor="title" size="2" weight="medium">
+                            Created by
+                        </Text>
+                        <TextField.Root id="title" {...register('createdBy')} />
+                    </Box>
+                    <Button type="submit">Search</Button>
+                    <Button type="button" onClick={handleClear} variant="soft">
+                        Clear
+                    </Button>
+                </Flex>
+            </form>
+        </Box>
     );
 }

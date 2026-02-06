@@ -1,3 +1,4 @@
+import { Box, Button, Flex, Text, TextArea, TextField } from '@radix-ui/themes';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router';
@@ -38,84 +39,133 @@ export function AddEditForm({ defaultValues, submit, isPending, isEdit }: AddEdi
     };
 
     return (
-        <div className="add-edit-form">
-            <form onSubmit={handleSubmit(onSubmit)}>
-                <div className="form-group">
-                    <label htmlFor="ticket">Ticket</label>
-                    <input id="ticket" {...register('ticket')} readOnly={isEdit} />
-                    {errors.ticket && <span className="error">{errors.ticket.message}</span>}
-                </div>
-                <div className="form-group">
-                    <label htmlFor="title">Title</label>
-                    <input id="title" {...register('title')} />
-                    {errors.title && <span className="error">{errors.title?.message}</span>}
-                </div>
-                <div className="form-group">
-                    <label htmlFor="description">Description</label>
-                    <textarea id="description" {...register('description')} rows={4} />
-                    {errors.description && <span className="error">{errors.description?.message}</span>}
-                </div>
-                <div className="form-group">
-                    <label>Steps</label>
-
-                    {fields.map((field, index) => (
-                        <div key={field.id} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                <input
-                                    className="steps"
-                                    {...register(`steps.${index}.value`)}
-                                    placeholder={`Step ${index + 1}`}
-                                />
-                                {errors.steps?.[index]?.value && (
-                                    <span className="error">{errors.steps?.[index]?.value?.message}</span>
-                                )}
-                            </div>
-
-                            {index > 0 && (
-                                <button type="button" className="addRemove" onClick={() => remove(index)}>
-                                    Remove
-                                </button>
+        <Box className="add-edit-form">
+            <Box asChild>
+                <form onSubmit={handleSubmit(onSubmit)}>
+                    <Flex direction="column" gap="4">
+                        <Box className="form-group">
+                            <Text as="label" htmlFor="ticket" size="2" weight="medium">
+                                Ticket
+                            </Text>
+                            <TextField.Root id="ticket" {...register('ticket')} readOnly={isEdit} />
+                            {errors.ticket && (
+                                <Text color="red" size="2">
+                                    {errors.ticket.message}
+                                </Text>
                             )}
-                        </div>
-                    ))}
+                        </Box>
+                        <Box className="form-group">
+                            <Text as="label" htmlFor="title" size="2" weight="medium">
+                                Title
+                            </Text>
+                            <TextField.Root id="title" {...register('title')} />
+                            {errors.title && (
+                                <Text color="red" size="2">
+                                    {errors.title?.message}
+                                </Text>
+                            )}
+                        </Box>
+                        <Box className="form-group">
+                            <Text as="label" htmlFor="description" size="2" weight="medium">
+                                Description
+                            </Text>
+                            <TextArea id="description" {...register('description')} rows={4} />
+                            {errors.description && (
+                                <Text color="red" size="2">
+                                    {errors.description?.message}
+                                </Text>
+                            )}
+                        </Box>
+                        <Box className="form-group">
+                            <Text as="label" size="2" weight="medium">
+                                Steps
+                            </Text>
 
-                    {fields.length < 5 && (
-                        <button type="button" className="addRemove" onClick={() => append({ value: '' })}>
-                            + Add step
-                        </button>
-                    )}
-                </div>
-                <div className="form-group">
-                    <label htmlFor="expectedResult">Expected result</label>
-                    <textarea id="expectedResult" {...register('expectedResult')} rows={4} />
-                    {errors.expectedResult && <span className="error">{errors.expectedResult?.message}</span>}
-                </div>
-                <div className="form-group">
-                    <label htmlFor="components">Components</label>
-                    <Controller
-                        control={control}
-                        name="components"
-                        render={({ field }) => (
-                            <Select
-                                inputId="components"
-                                {...field}
-                                isMulti
-                                options={COMPONENT_OPTIONS}
-                                onChange={field.onChange}
+                            {fields.map((field, index) => (
+                                <Flex key={field.id} gap="2" align="start">
+                                    <Flex direction="column" gap="2" style={{ flex: 1 }}>
+                                        <TextField.Root
+                                            className="steps"
+                                            {...register(`steps.${index}.value`)}
+                                            placeholder={`Step ${index + 1}`}
+                                        />
+                                        {errors.steps?.[index]?.value && (
+                                            <Text color="red" size="2">
+                                                {errors.steps?.[index]?.value?.message}
+                                            </Text>
+                                        )}
+                                    </Flex>
+
+                                    {index > 0 && (
+                                        <Button
+                                            type="button"
+                                            className="addRemove"
+                                            onClick={() => remove(index)}
+                                            variant="soft"
+                                            color="red"
+                                        >
+                                            Remove
+                                        </Button>
+                                    )}
+                                </Flex>
+                            ))}
+
+                            {fields.length < 5 && (
+                                <Button
+                                    type="button"
+                                    className="addRemove"
+                                    onClick={() => append({ value: '' })}
+                                    variant="soft"
+                                >
+                                    + Add step
+                                </Button>
+                            )}
+                        </Box>
+                        <Box className="form-group">
+                            <Text as="label" htmlFor="expectedResult" size="2" weight="medium">
+                                Expected result
+                            </Text>
+                            <TextArea id="expectedResult" {...register('expectedResult')} rows={4} />
+                            {errors.expectedResult && (
+                                <Text color="red" size="2">
+                                    {errors.expectedResult?.message}
+                                </Text>
+                            )}
+                        </Box>
+                        <Box className="form-group">
+                            <Text as="label" htmlFor="components" size="2" weight="medium">
+                                Components
+                            </Text>
+                            <Controller
+                                control={control}
+                                name="components"
+                                render={({ field }) => (
+                                    <Select
+                                        inputId="components"
+                                        {...field}
+                                        isMulti
+                                        options={COMPONENT_OPTIONS}
+                                        onChange={field.onChange}
+                                    />
+                                )}
                             />
-                        )}
-                    />
-                    {errors.components && <span className="error">{errors.components?.message}</span>}
-                </div>
-                <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
-                    <button type="submit" className="primary-button" disabled={isPending}>
-                        {isEdit ? 'Update' : 'Save'}
-                    </button>
-                    <button type="button" onClick={redirectToMainPage}>
-                        Cancel
-                    </button>
-                </div>
-            </form>
-        </div>
+                            {errors.components && (
+                                <Text color="red" size="2">
+                                    {errors.components?.message}
+                                </Text>
+                            )}
+                        </Box>
+                        <Flex gap="3" mt="4">
+                            <Button type="submit" className="primary-button" disabled={isPending}>
+                                {isEdit ? 'Update' : 'Save'}
+                            </Button>
+                            <Button type="button" onClick={redirectToMainPage} variant="soft">
+                                Cancel
+                            </Button>
+                        </Flex>
+                    </Flex>
+                </form>
+            </Box>
+        </Box>
     );
 }

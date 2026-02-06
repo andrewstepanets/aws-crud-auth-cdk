@@ -1,3 +1,4 @@
+import { Button, Heading } from '@radix-ui/themes';
 import { Link } from 'react-router';
 
 interface NavProps {
@@ -7,10 +8,12 @@ interface NavProps {
 export function Nav({ onSignOut }: NavProps) {
     return (
         <header className="nav">
-            <h1>
+            <Heading size="6">
                 <Link to="/">Scenarios Service</Link>
-            </h1>
-            <button onClick={onSignOut}>Sign out</button>
+            </Heading>
+            <Button onClick={onSignOut} variant="soft">
+                Sign out
+            </Button>
         </header>
     );
 }

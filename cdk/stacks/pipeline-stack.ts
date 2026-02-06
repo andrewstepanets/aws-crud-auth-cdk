@@ -32,7 +32,15 @@ export class PipelineStack extends Stack {
 
                 installCommands: ['n 20', 'node -v'],
 
-                commands: ['corepack enable', 'cd cdk', 'yarn install', 'yarn test', 'npx cdk synth'],
+                commands: [
+                    'corepack enable',
+                    'mkdir -p build',
+                    'echo "Placeholder" > build/index.html',
+                    'cd cdk',
+                    'yarn install',
+                    'yarn test',
+                    'npx cdk synth',
+                ],
 
                 primaryOutputDirectory: 'cdk/cdk.out',
             }),

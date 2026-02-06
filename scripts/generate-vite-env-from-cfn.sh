@@ -2,37 +2,29 @@
 set -e
 
 STAGE=${1:-dev}
-PIPELINE_STACK="PipelineStack"
 
 echo "Generating Vite env for stage: $STAGE"
 
 # Capitalize first letter for stack name
 STAGE_PREFIX=$(echo "$STAGE" | awk '{print toupper(substr($0,1,1)) tolower(substr($0,2))}')
 
-# Find stack names (CDK Pipelines creates: PipelineStack-Dev-AuthStack-XXXXX)
-AUTH_PATTERN="${PIPELINE_STACK}-${STAGE_PREFIX}-AuthStack"
-WEB_PATTERN="${PIPELINE_STACK}-${STAGE_PREFIX}-WebStack"
+# Stack names: Dev-AuthStack, Dev-WebStack, Prod-AuthStack, Prod-WebStack
+AUTH_STACK="${STAGE_PREFIX}-AuthStack"
+WEB_STACK="${STAGE_PREFIX}-WebStack"
 
-echo "Looking for stacks matching: $AUTH_PATTERN, $WEB_PATTERN"
+echo "Using stack names: $AUTH_STACK, $WEB_STACK"
 
-# Find actual stack names
-AUTH_STACK=$(aws cloudformation list-stacks \
-  --stack-status-filter CREATE_COMPLETE UPDATE_COMPLETE \
-  --query "StackSummaries[?contains(StackName, '$AUTH_PATTERN')].StackName | [0]" \
-  --output text)
+# Verify stacks exist
+AUTH_EXISTS=$(aws cloudformation describe-stacks --stack-name "$AUTH_STACK" 2>/dev/null || echo "")
+WEB_EXISTS=$(aws cloudformation describe-stacks --stack-name "$WEB_STACK" 2>/dev/null || echo "")
 
-WEB_STACK=$(aws cloudformation list-stacks \
-  --stack-status-filter CREATE_COMPLETE UPDATE_COMPLETE \
-  --query "StackSummaries[?contains(StackName, '$WEB_PATTERN')].StackName | [0]" \
-  --output text)
-
-if [ -z "$AUTH_STACK" ] || [ "$AUTH_STACK" = "None" ]; then
-  echo "Error: Auth stack not found"
+if [ -z "$AUTH_EXISTS" ]; then
+  echo "Error: Auth stack $AUTH_STACK not found"
   exit 1
 fi
 
-if [ -z "$WEB_STACK" ] || [ "$WEB_STACK" = "None" ]; then
-  echo "Error: Web stack not found"
+if [ -z "$WEB_EXISTS" ]; then
+  echo "Error: Web stack $WEB_STACK not found"
   exit 1
 fi
 

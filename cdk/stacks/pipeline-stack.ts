@@ -32,41 +32,71 @@ export class PipelineStack extends Stack {
 
                 installCommands: ['n 20', 'node -v'],
 
-                commands: [
-                    'corepack enable',
-                    'yarn install',
-                    'yarn build',
-                    'cd cdk',
-                    'yarn install',
-                    'yarn test',
-                    'npx cdk synth',
-                ],
+                commands: ['corepack enable', 'cd cdk', 'yarn install', 'yarn test', 'npx cdk synth'],
 
                 primaryOutputDirectory: 'cdk/cdk.out',
             }),
         });
 
-        pipeline.addStage(
-            new AppStage(this, 'Dev', {
-                envName: 'dev',
-                env: {
-                    account: process.env.CDK_DEFAULT_ACCOUNT,
-                    region: process.env.CDK_DEFAULT_REGION,
-                },
-            })
-        );
+        const devStage = new AppStage(this, 'Dev', {
+            envName: 'dev',
+            env: {
+                account: process.env.CDK_DEFAULT_ACCOUNT,
+                region: process.env.CDK_DEFAULT_REGION,
+            },
+        });
 
-        pipeline.addStage(
-            new AppStage(this, 'Prod', {
-                envName: 'prod',
-                env: {
-                    account: process.env.CDK_DEFAULT_ACCOUNT,
-                    region: process.env.CDK_DEFAULT_REGION,
-                },
-            }),
-            {
-                pre: [new pipelines.ManualApprovalStep('PromoteToProd')],
-            }
-        );
+        pipeline.addStage(devStage, {
+            post: [
+                new pipelines.CodeBuildStep('BuildAndDeployUiDev', {
+                    input: source,
+                    installCommands: ['n 20', 'node -v'],
+                    commands: [
+                        'echo "Generating Vite env from CloudFormation outputs"',
+                        'bash scripts/generate-vite-env-from-cfn.sh dev',
+                        'echo "Building frontend"',
+                        'corepack enable',
+                        'yarn install',
+                        'yarn build --mode prod',
+                        'echo "Verifying build output"',
+                        'ls -la build/',
+                        'test -d build || (echo "Build folder missing!" && exit 1)',
+                        'test -f build/index.html || (echo "index.html missing!" && exit 1)',
+                        'echo "Frontend build successful"',
+                    ],
+                }),
+            ],
+        });
+
+        const prodStage = new AppStage(this, 'Prod', {
+            envName: 'prod',
+            env: {
+                account: process.env.CDK_DEFAULT_ACCOUNT,
+                region: process.env.CDK_DEFAULT_REGION,
+            },
+        });
+
+        pipeline.addStage(prodStage, {
+            pre: [new pipelines.ManualApprovalStep('PromoteToProd')],
+            post: [
+                new pipelines.CodeBuildStep('BuildAndDeployUiProd', {
+                    input: source,
+                    installCommands: ['n 20', 'node -v'],
+                    commands: [
+                        'echo "Generating Vite env from CloudFormation outputs"',
+                        'bash scripts/generate-vite-env-from-cfn.sh prod',
+                        'echo "Building frontend"',
+                        'corepack enable',
+                        'yarn install',
+                        'yarn build --mode prod',
+                        'echo "Verifying build output"',
+                        'ls -la build/',
+                        'test -d build || (echo "Build folder missing!" && exit 1)',
+                        'test -f build/index.html || (echo "index.html missing!" && exit 1)',
+                        'echo "Frontend build successful"',
+                    ],
+                }),
+            ],
+        });
     }
 }

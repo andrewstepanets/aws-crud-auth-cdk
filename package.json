@@ -5,6 +5,8 @@
     "scripts": {
         "dev": "vite --mode dev",
         "build": "vite build --mode prod",
+        "build:dev": "bash scripts/generate-vite-env-from-cfn.sh dev && vite build --mode prod",
+        "build:prod": "bash scripts/generate-vite-env-from-cfn.sh prod && vite build --mode prod",
         "preview": "vite preview"
     },
     "dependencies": {

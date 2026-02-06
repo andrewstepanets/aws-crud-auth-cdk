@@ -67,21 +67,18 @@ export class AuthStack extends BaseStack {
             groupName: 'viewers',
         });
 
+        new CfnOutput(this, 'CognitoDomain', {
+            value: `scenarios-auth-${this.account}.auth.${this.region}.amazoncognito.com`,
+            description: 'Cognito domain (without https)',
+        });
+
+        new CfnOutput(this, 'CognitoClientId', {
+            value: this.userPoolUiClient.userPoolClientId,
+            description: 'Cognito UI client ID',
+        });
+
         new CfnOutput(this, 'UserPoolId', {
             value: this.userPool.userPoolId,
-        });
-
-        new CfnOutput(this, 'UserPoolClientId', {
-            value: this.userPoolUiClient.userPoolClientId,
-        });
-
-        new CfnOutput(this, 'CognitoAuthorizeUrl', {
-            value:
-                `https://scenarios-auth-${this.account}.auth.${this.region}.amazoncognito.com/oauth2/authorize` +
-                `?client_id=${this.userPoolUiClient.userPoolClientId}` +
-                `&response_type=code` +
-                `&scope=openid+email+profile` +
-                `&redirect_uri=https://dgmpvfufnkjzg.cloudfront.net`,
         });
 
         new CfnOutput(this, 'ApiClientId', {

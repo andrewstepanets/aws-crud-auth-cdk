@@ -1,4 +1,4 @@
-import { RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
+import { RemovalPolicy, Stack, StackProps, Tags } from 'aws-cdk-lib';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import { Construct } from 'constructs';
 
@@ -12,6 +12,7 @@ export class BaseStack extends Stack {
     constructor(scope: Construct, id: string, props: BaseStackProps) {
         super(scope, id, props);
         this.envName = props.envName;
+        Tags.of(this).add('Environment', props.envName);
     }
 
     protected createTable(id: string, props: dynamodb.TableProps): dynamodb.Table {

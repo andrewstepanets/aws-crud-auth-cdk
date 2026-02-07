@@ -15,7 +15,7 @@
         ]
     },
     "context": {
-        "connectionArn": "arn:aws:codeconnections:eu-west-1:311057178499:connection/3fbeb6f8-8cc2-4c56-b0b6-be001fa1fb07",
+        "connectionArn": "arn:aws:codeconnections:eu-west-1:311057178499:connection/bb0574b9-166c-4d6b-bdd5-f1c3b6bfd0ef",
         "@aws-cdk/aws-lambda:recognizeLayerVersion": true,
         "@aws-cdk/core:checkSecretUsage": true,
         "@aws-cdk/core:target-partitions": ["aws", "aws-cn"],

@@ -260,3 +260,9 @@ To understand who changed data and when and simplify debugging and investigation
 - [x] Implemented cursor based pagination using DynamoDB LastEvaluatedKey
 - [x] Implemented Prev and Next navigation with client side cursor stack
 - [x] Implemented filtering by createdBy using a dedicated Global Secondary Index
+
+### Step 8 – Audit logging and observability
+
+- [x] Add basic audit logging to record changes made to scenarios.
+- [x] Log CREATE, UPDATE, and DELETE actions in DynamoDB
+- [x] Implemented audit trail tab on the view screen

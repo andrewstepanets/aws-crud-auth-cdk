@@ -27,13 +27,13 @@ fi
 
 echo "Creating src/.env.production..."
 
-cat > src/.env.production << EOF
+cat > src/.env << EOF
 VITE_COGNITO_DOMAIN=$COGNITO_DOMAIN
 VITE_COGNITO_CLIENT_ID=$COGNITO_CLIENT_ID
 VITE_API_URL=/api
 EOF
 
 echo "--- .env.production content ---"
-cat src/.env.production
+cat src/.env
 echo "-------------------------------"
 echo "===== END generate vite env ====="

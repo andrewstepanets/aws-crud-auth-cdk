@@ -265,4 +265,4 @@ To understand who changed data and when and simplify debugging and investigation
 
 - [x] Add basic audit logging to record changes made to scenarios.
 - [x] Log CREATE, UPDATE, and DELETE actions in DynamoDB
-- [x] Implemented audit trail tab on the View screen
+- [x] Implemented audit trail tab on the view screen

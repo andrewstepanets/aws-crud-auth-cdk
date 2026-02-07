@@ -11,7 +11,7 @@ export class AuthStack extends BaseStack {
     constructor(scope: Construct, id: string, props: BaseStackProps) {
         super(scope, id, props);
 
-        const urls = ['https://dgmpvfufnkjzg.cloudfront.net', 'http://localhost:3000'];
+        const urls = ['d9slborqav0zn.cloudfront.net', 'http://localhost:3000'];
 
         this.userPool = new cognito.UserPool(this, 'ScenariosUserPool', {
             userPoolName: `scenarios-user-pool-${this.envName}`,

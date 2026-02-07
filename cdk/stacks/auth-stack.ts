@@ -32,7 +32,7 @@ export class AuthStack extends BaseStack {
 
         this.userPool.addDomain('ScenariosDomain', {
             cognitoDomain: {
-                domainPrefix: `scenarios-auth-${this.account}`,
+                domainPrefix: `scenarios-auth-${this.envName}-${this.account}`,
             },
         });
 
@@ -71,8 +71,8 @@ export class AuthStack extends BaseStack {
         });
 
         new CfnOutput(this, 'CognitoDomain', {
-            value: `scenarios-auth-${this.account}.auth.${this.region}.amazoncognito.com`,
-            description: 'Cognito domain (without https)',
+            value: `scenarios-auth-${this.envName}-${this.account}.auth.${this.region}.amazoncognito.com`,
+            description: 'Cognito domain',
         });
 
         new CfnOutput(this, 'CognitoClientId', {

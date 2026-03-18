@@ -13,7 +13,7 @@ export class AuthStack extends BaseStack {
 
         const urls =
             this.envName === 'prod'
-                ? ['https://localhost:3000']
+                ? ['https://d9slborqav0zn.cloudfront.net']
                 : ['https://d9slborqav0zn.cloudfront.net', 'http://localhost:3000'];
 
         this.userPool = new cognito.UserPool(this, 'ScenariosUserPool', {
